@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>5D Shinam Muzey & Marry Me</title>
+  <title>5D Shinam Muzey & Marry Me Room</title>
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; padding: 0; overflow: hidden; background: #05030a; font-family: sans-serif; touch-action: none; color: white; }
@@ -23,7 +23,7 @@
     }
     .panel-card {
       background: #1c1328; padding: 25px 20px; border-radius: 16px; border: 2px solid #ffdfa9;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8); text-align: center; width: 85%; max-width: 320px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8); text-align: center; width: 85%; max-width: 340px;
     }
     .panel-card h2 { margin-top: 0; color: #ffdfa9; font-size: 20px; margin-bottom: 15px; }
     
@@ -33,6 +33,11 @@
       color: #120c1f; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
     .menu-btn:active { transform: scale(0.96); }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000;
+    }
 
     #joystick-zone {
       position: absolute; bottom: 35px; left: 25px; width: 110px; height: 110px;
@@ -59,13 +64,25 @@
 </head>
 <body>
 
+  <!-- Boshqaruv Menyusi -->
   <div id="dashboard-screen" class="screen-panel">
     <div class="panel-card">
       <h2>🏛 Muzey Boshqaruvi</h2>
       <button class="menu-btn" id="b-enter">🏛 Muzeyga kirish</button>
-      <button class="menu-btn" id="b-edit">✏️ Muzeyni tahrirlash</button>
+      <button class="menu-btn" id="b-edit">✏️ Eksponat qo'shish</button>
+      <button class="menu-btn" id="b-marry-edit">💍 Marry Me xonasiga yuklash</button>
       <button class="menu-btn" id="b-share">🔗 Muzeyni ulashish</button>
-      <button class="menu-btn" id="b-gallery">📁 Galereyadan tanlash</button>
+    </div>
+  </div>
+
+  <!-- Tanlov oynasi (Oddiy muzey yoki Marry Me xonasi uchunligini tanlash) -->
+  <div id="select-modal" class="modal-overlay">
+    <div class="panel-card">
+      <h2>📁 Qayerga joylaymiz?</h2>
+      <p style="font-size:12px; color:#ddd; margin-bottom:15px;">Tanlangan faylni qaysi sohaga yuklashni ko'rsating:</p>
+      <button class="menu-btn" id="btn-choice-museum">🏛 Asosiy muzey zaliga</button>
+      <button class="menu-btn" id="btn-choice-marry" style="background: linear-gradient(135deg, #ff2a6d, #ff758c); color:white;">💍 Marry Me xonasiga</button>
+      <button class="menu-btn" id="btn-choice-cancel" style="background: #444; color:#fff;">Bekor qilish</button>
     </div>
   </div>
 
@@ -73,10 +90,10 @@
 
   <div id="ui">
     <h1>🏛 5D Shinam Muzey & Marry Me</h1>
-    <p>Eksponat yoniga borsa krupniy rejim ishlaydi</p>
+    <p>Gul tutgan ayiqcha bilan sayr qiling</p>
   </div>
 
-  <input type="file" id="media-input" accept="image/*,video/*" multiple>
+  <input type="file" id="media-input" accept="image/*,video/*">
   <div id="joystick-zone"><div id="joystick-knob"></div></div>
   <div id="canvas-container"></div>
 
@@ -91,15 +108,23 @@
     let bgMusic = document.getElementById("bg-music");
     let controls, scene, camera, renderer;
     let gallerySlots = [];
+    let marryMeSlot = null;
+    let butterflies = [];
     let currentSlotIndex = 0;
     let is3dInitialized = false;
     let playerGroup;
+    let uploadTargetType = 'museum'; // 'museum' yoki 'marry'
 
     document.getElementById("b-enter").addEventListener("click", enterMuseum);
-    document.getElementById("b-edit").addEventListener("click", openGallery);
-    document.getElementById("b-gallery").addEventListener("click", openGallery);
+    document.getElementById("b-edit").addEventListener("click", () => openMediaSelector('museum'));
+    document.getElementById("b-marry-edit").addEventListener("click", () => openMediaSelector('marry'));
     document.getElementById("b-share").addEventListener("click", shareMuseum);
     document.getElementById("back-to-menu-btn").addEventListener("click", showDashboard);
+    
+    document.getElementById("btn-choice-museum").addEventListener("click", () => { uploadTargetType = 'museum'; closeSelector(); document.getElementById('media-input').click(); });
+    document.getElementById("btn-choice-marry").addEventListener("click", () => { uploadTargetType = 'marry'; closeSelector(); document.getElementById('media-input').click(); });
+    document.getElementById("btn-choice-cancel").addEventListener("click", closeSelector);
+    
     document.getElementById("media-input").addEventListener("change", handleFileSelect);
 
     function showDashboard() {
@@ -111,8 +136,12 @@
       if (bgMusic && !bgMusic.paused) bgMusic.pause();
     }
 
-    function openGallery() {
-      document.getElementById('media-input').click();
+    function openMediaSelector(target) {
+      document.getElementById("select-modal").style.display = "flex";
+    }
+
+    function closeSelector() {
+      document.getElementById("select-modal").style.display = "none";
     }
 
     function enterMuseum() {
@@ -160,19 +189,14 @@
         is3dInitialized = true;
       }
 
-      for (let i = 0; i < files.length; i++) {
-        if (currentSlotIndex >= gallerySlots.length) {
-          alert("Muzeydagi barcha ramkalar to'ldi!");
-          break;
-        }
+      const file = files[0];
+      const fileURL = URL.createObjectURL(file);
 
-        const file = files[i];
-        const fileURL = URL.createObjectURL(file);
-        const slot = gallerySlots[currentSlotIndex];
-
-        if (slot.video) {
-          slot.video.pause();
-          slot.video = null;
+      if (uploadTargetType === 'marry' && marryMeSlot) {
+        // Marry Me xonasi uchun maxsus slot
+        if (marryMeSlot.video) {
+          marryMeSlot.video.pause();
+          marryMeSlot.video = null;
         }
 
         if (file.type.startsWith('image/')) {
@@ -180,7 +204,7 @@
           loader.load(fileURL, (tex) => {
             tex.generateMipmaps = true;
             tex.minFilter = THREE.LinearMipmapLinearFilter;
-            slot.mesh.material = new THREE.MeshBasicMaterial({ map: tex });
+            marryMeSlot.mesh.material = new THREE.MeshBasicMaterial({ map: tex });
           });
         } else if (file.type.startsWith('video/')) {
           const vid = document.createElement('video');
@@ -193,11 +217,42 @@
 
           const tex = new THREE.VideoTexture(vid);
           tex.minFilter = THREE.LinearFilter;
-          slot.mesh.material = new THREE.MeshBasicMaterial({ map: tex });
-          slot.video = vid;
+          marryMeSlot.mesh.material = new THREE.MeshBasicMaterial({ map: tex });
+          marryMeSlot.video = vid;
         }
+        alert("Marry Me xonasiga muvaffaqiyatli joylandi! 💍");
+      } else {
+        // Oddiy muzey zali uchun
+        if (currentSlotIndex < gallerySlots.length) {
+          const slot = gallerySlots[currentSlotIndex];
+          if (slot.video) { slot.video.pause(); slot.video = null; }
 
-        currentSlotIndex++;
+          if (file.type.startsWith('image/')) {
+            const loader = new THREE.TextureLoader();
+            loader.load(fileURL, (tex) => {
+              tex.generateMipmaps = true;
+              tex.minFilter = THREE.LinearMipmapLinearFilter;
+              slot.mesh.material = new THREE.MeshBasicMaterial({ map: tex });
+            });
+          } else if (file.type.startsWith('video/')) {
+            const vid = document.createElement('video');
+            vid.src = fileURL;
+            vid.crossOrigin = 'anonymous';
+            vid.loop = true;
+            vid.muted = false;
+            vid.volume = 0.0;
+            vid.play();
+
+            const tex = new THREE.VideoTexture(vid);
+            tex.minFilter = THREE.LinearFilter;
+            slot.mesh.material = new THREE.MeshBasicMaterial({ map: tex });
+            slot.video = vid;
+          }
+          currentSlotIndex++;
+          alert("Muzey zaliga rasm/video qo'shildi!");
+        } else {
+          alert("Muzeydagi barcha ramkalar to'ldi!");
+        }
       }
 
       enterMuseum();
@@ -242,7 +297,7 @@
         controls.dampingFactor = 0.08;
         controls.maxPolarAngle = Math.PI / 2 - 0.05;
         controls.minDistance = 1.5;
-        controls.maxDistance = 14.0;
+        controls.maxDistance = 25.0;
       }
 
       scene.add(new THREE.AmbientLight(0xffffff, 0.9));
@@ -250,42 +305,40 @@
       dirLight.position.set(5, 12, 5);
       scene.add(dirLight);
 
+      // Asosiy va Marry Me xonasi materiallari
       const wallMat = new THREE.MeshBasicMaterial({ color: 0x31244a });
-      const accentWallMat = new THREE.MeshBasicMaterial({ color: 0x543242 });
+      const marryRoomWallMat = new THREE.MeshBasicMaterial({ color: 0x4a2838 }); // Marry Me xonasi uchun o'zgacha shohona rang
       const floorMat = new THREE.MeshBasicMaterial({ color: 0x422d1a });
       const ceilingMat = new THREE.MeshBasicMaterial({ color: 0x1d142b });
 
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), floorMat);
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 60), floorMat);
       floor.rotation.x = -Math.PI / 2;
+      floor.position.set(0, 0, 10);
       scene.add(floor);
 
-      const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), ceilingMat);
-      ceiling.position.y = 3.5;
+      const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(40, 60), ceilingMat);
+      ceiling.position.set(0, 3.5, 10);
       ceiling.rotation.x = Math.PI / 2;
       scene.add(ceiling);
 
-      for(let x = -10; x <= 10; x += 10) {
-        for(let z = -10; z <= 10; z += 10) {
-          const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 0.3, 16), new THREE.MeshBasicMaterial({color: 0xd4af37}));
-          lampBase.position.set(x, 3.35, z);
-          scene.add(lampBase);
-          const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), new THREE.MeshBasicMaterial({color: 0xffffff}));
-          bulb.position.set(x, 3.15, z);
-          scene.add(bulb);
-        }
-      }
-
+      // Devorlar (Asosiy zal + Alohida Marry Me xonasi)
       function createWall(w, h, d, x, y, z, mat = wallMat) {
         const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
         wall.position.set(x, y, z);
         scene.add(wall);
       }
 
+      // Asosiy zal devorlari
       createWall(40, 3.5, 0.5, 0, 1.75, -20);
-      createWall(40, 3.5, 0.5, 0, 1.75, 20, accentWallMat);
       createWall(0.5, 3.5, 40, -20, 1.75, 0);
       createWall(0.5, 3.5, 40, 20, 1.75, 0);
 
+      // **ALOHIDA MARRY ME XONASI (Z = 20 dan 40 gacha)**
+      createWall(40, 3.5, 0.5, 0, 1.75, 40, marryRoomWallMat); // Orqa devor
+      createWall(0.5, 3.5, 20, -20, 1.75, 30, marryRoomWallMat); // Chap devor
+      createWall(0.5, 3.5, 20, 20, 1.75, 30, marryRoomWallMat); // O'ng devor
+
+      // Xonalararo o'tish eshigi (Arkasi)
       function createDoorway(x, z, rotY = 0) {
         const doorGroup = new THREE.Group();
         const frameMat = new THREE.MeshBasicMaterial({ color: 0xd4af37 });
@@ -306,36 +359,40 @@
         doorGroup.rotation.y = rotY;
         scene.add(doorGroup);
       }
-      createDoorway(0, -20);
-      createDoorway(-20, 0, Math.PI / 2);
-      createDoorway(20, 0, -Math.PI / 2);
+      createDoorway(0, 20); // Marry Me xonasiga kirish eshigi
 
-      function createStatue(x, z) {
-        const statueGroup = new THREE.Group();
-        const pedestal = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.8), new THREE.MeshBasicMaterial({color: 0x554433}));
-        pedestal.position.y = 0.6;
-        statueGroup.add(pedestal);
-        const sculpture = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.2, 16), new THREE.MeshBasicMaterial({color: 0xd4af37}));
-        sculpture.position.y = 1.8;
-        statueGroup.add(sculpture);
-        statueGroup.position.set(x, 0, z);
-        scene.add(statueGroup);
-      }
-      createStatue(-12, -12);
-      createStatue(12, -12);
-      createStatue(-12, 12);
-      createStatue(12, 12);
+      // **Marry Me xonasidagi Qizil gilamcha**
+      const marryCarpet = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 18), new THREE.MeshBasicMaterial({ color: 0x990000 }));
+      marryCarpet.rotation.x = -Math.PI / 2;
+      marryCarpet.position.set(0, 0.02, 30);
+      scene.add(marryCarpet);
 
-      const carpet = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 14), new THREE.MeshBasicMaterial({ color: 0x990000 }));
-      carpet.rotation.x = -Math.PI / 2;
-      carpet.position.set(0, 0.01, 12);
-      scene.add(carpet);
-
+      // **Marry Me S+Z yozuvi va rasm/video joylashadigan ramka**
       const marryGroup = new THREE.Group();
-      marryGroup.position.set(0, 0, 19.2);
-      marryGroup.add(createTextSprite("S + Z", 120, "#ff2a6d")).position.set(0, 2.5, 0);
-      marryGroup.add(createTextSprite("WILL YOU MARRY ME? 💍", 60, "#d4af37")).position.set(0, 1.7, 0);
+      marryGroup.position.set(0, 0, 39.7);
+      
+      // Yozuvlar (Rasm/Video ramkasi TEPASIDA)
+      marryGroup.add(createTextSprite("S + Z", 120, "#ff2a6d")).position.set(0, 2.7, 0);
+      marryGroup.add(createTextSprite("WILL YOU MARRY ME? 💍", 55, "#d4af37")).position.set(0, 2.0, 0);
+      
+      // Marry Me xonasining maxsus rasm/video ramkasi
+      const marryMediaMesh = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 2.8), new THREE.MeshBasicMaterial({ color: 0xd1c7bd }));
+      marryMediaMesh.position.set(0, 0.5, 0);
+      marryGroup.add(marryMediaMesh);
+      
       scene.add(marryGroup);
+      marryMeSlot = { mesh: marryMediaMesh, group: marryGroup, video: null, worldPos: new THREE.Vector3(0, 2.0, 39.0) };
+
+      // **Xonada uchib yuruvchi Sehrli Kapalaklar**
+      for (let i = 0; i < 8; i++) {
+        const butterfly = new THREE.Mesh(
+          new THREE.ConeGeometry(0.15, 0.4, 4),
+          new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xff69b4 : 0x00ffff, wireframe: true })
+        );
+        butterfly.position.set((Math.random() - 0.5) * 15, 1.5 + Math.random() * 1.5, 22 + Math.random() * 15);
+        scene.add(butterfly);
+        butterflies.push({ mesh: butterfly, speed: 0.02 + Math.random() * 0.03, offset: Math.random() * 10 });
+      }
 
       // Gul tutgan ayiqcha (Personaj)
       playerGroup = new THREE.Group();
@@ -374,8 +431,8 @@
 
       scene.add(playerGroup);
 
+      // Asosiy muzey zalidagi ramkalar
       const slotPositions = [
-        { pos: [0, 2.0, -19.7], size: [4.0, 2.5] },
         { pos: [-10, 2.0, -19.7], size: [3.0, 3.0] },
         { pos: [10, 2.0, -19.7], size: [3.0, 3.0] },
         { pos: [-19.7, 2.0, 0], size: [3.5, 2.5], rotY: Math.PI / 2 },
@@ -410,10 +467,16 @@
         moveData.x = dx / maxR; moveData.y = dy / maxR;
       }
 
-      let activeTargetPos = null;
-
-      function animate() {
+      function animate(time) {
         requestAnimationFrame(animate);
+        
+        // Kapalaklar harakati
+        butterflies.forEach((b, index) => {
+          b.mesh.position.y += Math.sin(time * 0.003 + b.offset) * 0.01;
+          b.mesh.position.x += Math.cos(time * 0.002 + index) * 0.02;
+          b.mesh.rotation.y += 0.02;
+        });
+
         if (Math.abs(moveData.x) > 0.08 || Math.abs(moveData.y) > 0.08) {
           const speed = 0.08;
           const camAngle = Math.atan2(camera.position.x - playerGroup.position.x, camera.position.z - playerGroup.position.z);
@@ -423,10 +486,13 @@
           playerGroup.rotation.y = moveAngle;
         }
 
+        // Krupniy rejim (Eksponat yoniga borganda)
         let nearestSlot = null;
         let minDistance = 999;
 
-        gallerySlots.forEach(slot => {
+        // Marry Me xonasidagi slotni ham tekshiramiz
+        let allSlots = [...gallerySlots, marryMeSlot];
+        allSlots.forEach(slot => {
           const dist = playerGroup.position.distanceTo(slot.worldPos);
           if (dist < minDistance) {
             minDistance = dist;
@@ -440,24 +506,14 @@
           if (nearestSlot.video) {
             nearestSlot.video.volume = 1.0;
           }
-          // Kamera krupniy (yaqin rejim) eksponat va ayiqchani ko'rsatadi
           const targetCamX = nearestSlot.worldPos.x + (nearestSlot.worldPos.z === -19.7 ? 0 : (nearestSlot.worldPos.x < 0 ? 2.5 : -2.5));
-          const targetCamZ = nearestSlot.worldPos.z + (nearestSlot.worldPos.z === -19.7 ? 2.5 : 0);
+          const targetCamZ = nearestSlot.worldPos.z + (nearestSlot.worldPos.z === -19.7 ? 2.5 : (nearestSlot.worldPos.z === 39.0 ? -3.5 : 0));
           
           camera.position.x += (targetCamX - camera.position.x) * 0.05;
           camera.position.z += (targetCamZ - camera.position.z) * 0.05;
           camera.position.y += (2.2 - camera.position.y) * 0.05;
-
-          if (controls) {
-            controls.target.set(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
-          }
         } else {
-          // Oddiy muzey bo'ylab yurish rejimi
-          gallerySlots.forEach(s => { if(s.video) s.video.volume = 0.0; });
-          
-          if (controls) {
-            controls.target.set(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
-          }
+          allSlots.forEach(s => { if(s.video) s.video.volume = 0.0; });
         }
 
         if (bgMusic) {
@@ -465,6 +521,7 @@
         }
 
         if (controls) {
+          controls.target.set(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
           controls.update();
         }
         renderer.render(scene, camera);
