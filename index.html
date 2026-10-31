@@ -3,39 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>3D Shinam Muzey</title>
+  <title>Maxfiy 3D Muzey</title>
   <style>
     body { margin: 0; overflow: hidden; background: #0a0a0f; font-family: sans-serif; touch-action: none; }
-    #canvas-container { width: 100vw; height: 100vh; }
+    #canvas-container { width: 100vw; height: 100vh; display: none; }
     #ui {
       position: absolute; top: 15px; width: 100%; text-align: center;
-      color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); pointer-events: none; z-index: 10;
+      color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); pointer-events: none; z-index: 10; display: none;
     }
     h1 { font-size: 18px; margin: 0; color: #ffdfa9; }
     p { font-size: 12px; opacity: 0.8; margin-top: 4px; }
     
-    /* Virtual Joystick UI */
+    /* Joystick */
     #joystick-zone {
       position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px;
       background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%; touch-action: none; z-index: 10;
+      border-radius: 50%; touch-action: none; z-index: 10; display: none;
     }
     #joystick-knob {
       position: absolute; top: 35px; left: 35px; width: 50px; height: 50px;
       background: rgba(255, 223, 169, 0.8); border-radius: 50%;
       box-shadow: 0 0 10px rgba(255,223,169,0.5); pointer-events: none;
     }
+
+    /* Parol Kirish Bo'limi */
+    #password-screen {
+      position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #0d0914; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 100; color: white;
+    }
+    #password-screen h2 { margin-bottom: 20px; color: #ffdfa9; font-size: 22px; text-shadow: 0 0 10px rgba(255,223,169,0.3); }
+    #password-input {
+      padding: 12px 20px; font-size: 16px; border-radius: 8px; border: 2px solid #5a3d28;
+      background: #191224; color: white; text-align: center; outline: none; margin-bottom: 15px;
+    }
+    #submit-btn {
+      padding: 10px 25px; font-size: 16px; border: none; border-radius: 8px;
+      background: #ffdfa9; color: #1a1025; font-weight: bold; cursor: pointer; transition: 0.3s;
+    }
+    #error-msg { color: #ff4d4d; margin-top: 10px; font-size: 14px; font-weight: bold; display: none; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+
+  <!-- Maxfiy Parol Kirish Ekrani -->
+  <div id="password-screen">
+    <h2>🔒 Maxfiy 3D Muzeyga kirish</h2>
+    <input type="password" id="password-input" placeholder="Parolni kiriting..." autofocus>
+    <button id="submit-btn" onclick="checkPassword()">KIRISH</button>
+    <div id="error-msg" id="error-msg">Noto'g'ri parol! Qayta urining.</div>
+  </div>
+
   <div id="ui">
     <h1>🏛 Shinam 3D Galereya</h1>
-    <p>Joystick orqali harakatlaning va eksponatlarga yaqinashing</p>
+    <p>Joystick orqali harakatlaning (Video ovozi yaqinlashganda ishlaydi)</p>
   </div>
   
-  <!-- Mobil Joystick -->
   <div id="joystick-zone">
     <div id="joystick-knob"></div>
   </div>
@@ -48,141 +73,270 @@
       Telegram.WebApp.expand();
     }
 
-    // 1. Sahna va Kamera
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x120c1f);
-    scene.fog = new THREE.FogExp2(0x120c1f, 0.05);
-
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-    // 2. Yoritish
-    const ambientLight = new THREE.AmbientLight(0xffd59e, 0.6);
-    scene.add(ambientLight);
-
-    // 3. Xona (Pol va Devorlar)
-    const floorGeo = new THREE.PlaneGeometry(30, 30);
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0x3d251e, roughness: 0.4 });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    scene.add(floor);
-
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x2a1b28, roughness: 0.8 });
-    const backWall = new THREE.Mesh(new THREE.PlaneGeometry(30, 10), wallMat);
-    backWall.position.set(0, 5, -15);
-    scene.add(backWall);
-
-    // 4. Personaj (Pingvincha)
-    const playerGroup = new THREE.Group();
+    // Parol tekshirish
+    const correctPassword = "muzey2026"; // PAROLINGIZ (O'zgartirishingiz mumkin)
     
-    // Tana
-    const bodyGeo = new THREE.SphereGeometry(0.5, 16, 16);
-    bodyGeo.scale(1, 1.3, 0.9);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = 0.65;
-    playerGroup.add(body);
-
-    // Qorin
-    const bellyGeo = new THREE.SphereGeometry(0.4, 16, 16);
-    bellyGeo.scale(0.8, 1.1, 0.5);
-    const bellyMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const belly = new THREE.Mesh(bellyGeo, bellyMat);
-    belly.position.set(0, 0.6, 0.25);
-    playerGroup.add(belly);
-
-    // Tumshuq
-    const beakGeo = new THREE.ConeGeometry(0.1, 0.2, 8);
-    const beakMat = new THREE.MeshStandardMaterial({ color: 0xff6600 });
-    const beak = new THREE.Mesh(beakGeo, beakMat);
-    beak.rotation.x = Math.PI / 2;
-    beak.position.set(0, 0.85, 0.45);
-    playerGroup.add(beak);
-
-    playerGroup.position.set(0, 0, 5);
-    scene.add(playerGroup);
-
-    // 5. Shamlar
-    const candles = [];
-    function createCandle(x, z) {
-      const candleGroup = new THREE.Group();
-      const cGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.4, 8);
-      const cMat = new THREE.MeshStandardMaterial({ color: 0xfff8e7 });
-      const candleMesh = new THREE.Mesh(cGeo, cMat);
-      candleMesh.position.y = 0.2;
-      candleGroup.add(candleMesh);
-
-      const light = new THREE.PointLight(0xffaa33, 2, 5);
-      light.position.y = 0.45;
-      candleGroup.add(light);
-
-      candleGroup.position.set(x, 0, z);
-      scene.add(candleGroup);
-      candles.push(light);
+    function checkPassword() {
+      const input = document.getElementById("password-input").value;
+      if (input === correctPassword) {
+        // Parol to'g'ri bo'lsa 3D muzeyni ochish
+        document.getElementById("password-screen").style.display = "none";
+        document.getElementById("canvas-container").style.display = "block";
+        document.getElementById("ui").style.display = "block";
+        document.getElementById("joystick-zone").style.display = "block";
+        init3D();
+      } else {
+        document.getElementById("error-msg").style.display = "block";
+      }
     }
 
-    createCandle(-2, -5);
-    createCandle(2, -5);
-    createCandle(-5, 0);
+    function init3D() {
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0e0915);
+      scene.fog = new THREE.FogExp2(0x0e0915, 0.04);
 
-    // 6. Pianino
-    const pianoGroup = new THREE.Group();
-    const pBody = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.2, 1), new THREE.MeshStandardMaterial({ color: 0x050505 }));
-    pBody.position.y = 0.6;
-    pianoGroup.add(pBody);
-    pianoGroup.position.set(6, 0, -8);
-    scene.add(pianoGroup);
+      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-    // 7. Rasm Ramkasi
-    const photoTexture = new THREE.TextureLoader().load('https://picsum.photos/400/500');
-    const frameGeo = new THREE.BoxGeometry(2.4, 3.2, 0.1);
-    const frameMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b });
-    const frame = new THREE.Mesh(frameGeo, frameMat);
-    frame.position.set(-4, 4, -14.9);
-    scene.add(frame);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+      scene.add(ambientLight);
 
-    const photoMat = new THREE.MeshBasicMaterial({ map: photoTexture });
-    const photo = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.9), photoMat);
-    photo.position.set(-4, 4, -14.83);
-    scene.add(photo);
+      // Keng pol (30x30)
+      const floorGeo = new THREE.PlaneGeometry(35, 35);
+      const floorMat = new THREE.MeshBasicMaterial({ color: 0x231424 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      scene.add(floor);
 
-    // 8. Video Eksponat
-    const video = document.createElement('video');
-    video.src = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
-    video.crossOrigin = 'anonymous';
-    video.loop = true;
-    video.muted = true;
+      // To'rtta Devor (Muzey qobig'i)
+      const wallMat = new THREE.MeshBasicMaterial({ color: 0x160e21 });
+      const createWall = (w, h, x, y, z, rotY) => {
+        const wall = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat);
+        wall.position.set(x, y, z);
+        wall.rotation.y = rotY;
+        scene.add(wall);
+      };
+      createWall(35, 8, 0, 4, -17.5, 0); // Orqa devor
+      createWall(35, 8, 0, 4, 17.5, Math.PI); // Old devor
+      createWall(35, 8, -17.5, 4, 0, Math.PI / 2); // Chap devor
+      createWall(35, 8, 17.5, 4, 0, -Math.PI / 2); // O'ng devor
 
-    const videoTexture = new THREE.VideoTexture(video);
-    const videoGeo = new THREE.PlaneGeometry(4, 2.5);
-    const videoMat = new THREE.MeshBasicMaterial({ map: videoTexture });
-    const videoMesh = new THREE.Mesh(videoGeo, videoMat);
-    videoMesh.position.set(3, 4, -14.83);
-    scene.add(videoMesh);
+      // Personajlar (Pingvin & Ayiqcha)
+      const playerGroup = new THREE.Group();
+      // Pingvin tanasi
+      const pBody = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.0, 16), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+      pBody.position.y = 0.5;
+      playerGroup.add(pBody);
+      // Qorin
+      const belly = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.7), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+      belly.position.set(0, 0.45, 0.36);
+      playerGroup.add(belly);
+      // Tumshuq
+      const beak = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 8), new THREE.MeshBasicMaterial({ color: 0xff5500 }));
+      beak.rotation.x = Math.PI / 2;
+      beak.position.set(0, 0.7, 0.4);
+      playerGroup.add(beak);
 
-    const vFrame = new THREE.Mesh(new THREE.BoxGeometry(4.3, 2.8, 0.1), frameMat);
-    vFrame.position.set(3, 4, -14.9);
-    scene.add(vFrame);
+      playerGroup.position.set(0, 0, 5);
+      scene.add(playerGroup);
 
-    // 9. Joystick Mantiq
-    const zone = document.getElementById('joystick-zone');
-    const knob = document.getElementById('joystick-knob');
-    let moveData = { x: 0, y: 0 };
-    let isTouching = false;
+      // Ayiqcha (Bear Personaj)
+      const bearGroup = new THREE.Group();
+      const bBody = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), new THREE.MeshBasicMaterial({ color: 0x8b5a2b }));
+      bBody.position.y = 0.45;
+      bearGroup.add(bBody);
+      const bHead = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), new THREE.MeshBasicMaterial({ color: 0x8b5a2b }));
+      bHead.position.set(0, 0.8, 0);
+      bearGroup.add(bHead);
+      bearGroup.position.set(-2, 0, -2);
+      scene.add(bearGroup);
 
-    zone.addEventListener('touchstart', (e) => { isTouching = true; updateJoystick(e.touches[0]); });
-    window.addEventListener('touchmove', (e) => { if(isTouching) updateJoystick(e.touches[0]); });
-    window.addEventListener('touchend', () => {
-      isTouching = false;
-      knob.style.left = '35px';
-      knob.style.top = '35px';
-      moveData = { x: 0, y: 0 };
-    });
+      // Pianino (Pionina)
+      const piano = new THREE.Group();
+      const pianoBody = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.1, 0.8), new THREE.MeshBasicMaterial({ color: 0x050505 }));
+      pianoBody.position.set(0, 0.55, 0);
+      piano.add(pianoBody);
+      piano.position.set(10, 0, -14);
+      scene.add(piano);
 
-    function updateJoystick(touch) {
-      const rect = zone.getBoundingClientRect();
-      const centerX = rect.left
-    2
+      // Shamlar
+      function addCandle(x, z) {
+        const cGroup = new THREE.Group();
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.35, 8), new THREE.MeshBasicMaterial({ color: 0xfff3cd }));
+        base.position.y = 0.175;
+        cGroup.add(base);
+        const fire = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff8c00 }));
+        fire.position.y = 0.38;
+        cGroup.add(fire);
+        cGroup.position.set(x, 0, z);
+        scene.add(cGroup);
+      }
+      addCandle(-6, -15);
+      addCandle(6, -15);
+      addCandle(-12, 12);
+      addCandle(12, 12);
+
+      // Galereya Uchun 20 Ta Eksponat (Rasmlar va Videolar)
+      const galleryItems = [];
+      const frameMat = new THREE.MeshBasicMaterial({ color: 0x8b5a2b });
+
+      // Namuna Rasmlar va Videolar Ro'yxati (Bularni keyinchalik o'z havolalaringizga o'zgartirishingiz mumkin)
+      const itemData = [
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=1', pos: [-14, 3.5, -17.4], size: [2.2, 3] },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=2', pos: [-10, 3.5, -17.4], size: [2.2, 3] },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=3', pos: [-6, 3.5, -17.4], size: [2.2, 3] },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=4', pos: [2, 3.5, -17.4], size: [2.2, 3] },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=5', pos: [6, 3.5, -17.4], size: [2.2, 3] },
+        
+        { type: 'video', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', pos: [-2, 3.5, -17.4], size: [3.2, 2.2] },
+        { type: 'video', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', pos: [14, 3.5, -17.4], size: [3.2, 2.2] },
+        
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=6', pos: [-17.4, 3.5, -12], size: [2.2, 3], rotY: Math.PI/2 },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=7', pos: [-17.4, 3.5, -8], size: [2.2, 3], rotY: Math.PI/2 },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=8', pos: [-17.4, 3.5, -4], size: [2.2, 3], rotY: Math.PI/2 },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=9', pos: [-17.4, 3.5, 0], size: [2.2, 3], rotY: Math.PI/2 },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=10', pos: [-17.4, 3.5, 4], size: [2.2, 3], rotY: Math.PI/2 },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=11', pos: [-17.4, 3.5, 8], size: [2.2, 3], rotY: Math.PI/2 },
+        
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=12', pos: [17.4, 3.5, -12], size: [2.2, 3], rotY: -Math.PI/2 },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=13', pos: [17.4, 3.5, -8], size: [2.2, 3], rotY: -Math.PI/2 },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=14', pos: [17.4, 3.5, -4], size: [2.2, 3], rotY: -Math.PI/2 },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=15', pos: [17.4, 3.5, 0], size: [2.2, 3], rotY: -Math.PI/2 },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=16', pos: [17.4, 3.5, 4], size: [2.2, 3], rotY: -Math.PI/2 },
+        { type: 'photo', url: 'https://picsum.photos/400/500?sig=17', pos: [17.4, 3.5, 8], size: [2.2, 3], rotY: -Math.PI/2 },
+        
+        { type: 'video', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', pos: [0, 3.5, 17.4], size: [3.2, 2.2], rotY: Math.PI }
+      ];
+
+      itemData.forEach(item => {
+        const itemGroup = new THREE.Group();
+        const rotY = item.rotY || 0;
+
+        // Ramka
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(item.size[0] + 0.3, item.size[1] + 0.3, 0.08), frameMat);
+        frame.rotation.y = rotY;
+        itemGroup.add(frame);
+
+        if (item.type === 'photo') {
+          const tex = new THREE.TextureLoader().load(item.url);
+          const photo = new THREE.Mesh(new THREE.PlaneGeometry(item.size[0], item.size[1]), new THREE.MeshBasicMaterial({ map: tex }));
+          photo.position.set(0, 0, rotY === 0 ? 0.045 : (rotY === Math.PI ? -0.045 : (rotY === Math.PI/2 ? 0.045 : -0.045)));
+          photo.rotation.y = rotY;
+          itemGroup.add(photo);
+        } else if (item.type === 'video') {
+          const vid = document.createElement('video');
+          vid.src = item.url;
+          vid.crossOrigin = 'anonymous';
+          vid.loop = true;
+          vid.muted = false; // OVOZ BILAN IJRO ETILADI
+          vid.volume = 0.0; // Dastlab ovozsiz qilib yaqinlashganda ko'tariladi
+          vid.load();
+
+          const tex = new THREE.VideoTexture(vid);
+          const videoMesh = new THREE.Mesh(new THREE.PlaneGeometry(item.size[0], item.size[1]), new THREE.MeshBasicMaterial({ map: tex }));
+          videoMesh.position.set(0, 0, rotY === 0 ? 0.045 : (rotY === Math.PI ? -0.045 : (rotY === Math.PI/2 ? 0.045 : -0.045)));
+          videoMesh.rotation.y = rotY;
+          itemGroup.add(videoMesh);
+
+          galleryItems.push({ mesh: itemGroup, video: vid });
+        }
+
+        itemGroup.position.set(item.pos[0], item.pos[1], item.pos[2]);
+        scene.add(itemGroup);
+      });
+
+      camera.position.set(0, 3, 10);
+
+      // Joystick Boshqaruvi
+      const zone = document.getElementById('joystick-zone');
+      const knob = document.getElementById('joystick-knob');
+      let moveData = { x: 0, y: 0 };
+      let isTouching = false;
+
+      zone.addEventListener('touchstart', (e) => { isTouching = true; updateJoystick(e.touches[0]); });
+      window.addEventListener('touchmove', (e) => { if(isTouching) updateJoystick(e.touches[0]); });
+      window.addEventListener('touchend', () => {
+        isTouching = false;
+        knob.style.left = '35px';
+        knob.style.top = '35px';
+        moveData = { x: 0, y: 0 };
+      });
+
+      function updateJoystick(touch) {
+        const rect = zone.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        let dx = touch.clientX - centerX;
+        let dy = touch.clientY - centerY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const maxRadius = 40;
+
+        if (dist > maxRadius) {
+          dx = (dx / dist) * maxRadius;
+          dy = (dy / dist) * maxRadius;
+        }
+
+        knob.style.left = `${35 + dx}px`;
+        knob.style.top = `${35 + dy}px`;
+
+        moveData.x = dx / maxRadius;
+        moveData.y = dy / maxRadius;
+      }
+
+      // Animatsiya Sikli
+      let bearAngle = 0;
+      function animate() {
+        requestAnimationFrame(animate);
+
+        // Pingvin harakati
+        if (Math.abs(moveData.x) > 0.1 || Math.abs(moveData.y) > 0.1) {
+          playerGroup.position.x += moveData.x * 0.11;
+          playerGroup.position.z += moveData.y * 0.11;
+
+          // Xonadan tashqariga chiqib ketmaslik to'siqlari
+          playerGroup.position.x = Math.max(-16.5, Math.min(16.5, playerGroup.position.x));
+          playerGroup.position.z = Math.max(-16.5, Math.min(16.5, playerGroup.position.z));
+
+          const angle = Math.atan2(moveData.x, moveData.y);
+          playerGroup.rotation.y = angle;
+        }
+
+        // Ayiqchani mustaqil aylanib yurishi
+        bearAngle += 0.01;
+        bearGroup.position.x = -5 + Math.sin(bearAngle) * 3;
+        bearGroup.position.z = Math.cos(bearAngle) * 3;
+        bearGroup.rotation.y = bearAngle + Math.PI/2;
+
+        // Kamera kuzatishi
+        camera.position.x = playerGroup.position.x;
+        camera.position.z = playerGroup.position.z + 4.8;
+        camera.position.y = playerGroup.position.y + 2.5;
+        camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z - 2);
+
+        // Yaqinlashganda Video Ovozini Yoqish Mantiqi
+        galleryItems.forEach(item => {
+          const dist = playerGroup.position.distanceTo(item.mesh.position);
+          if (dist < 4.5) {
+            // Yaqinlashganda: ijro etiladi va ovoz balandligi masofaga moslashadi
+            if (item.video.paused) {
+              item.video.play().catch(e => console.log("Bosilgach ruxsat etiladi"));
+            }
+            // Masofaga qarab ovoz darajasi (qanchalik yaqin kelsa, shuncha balandroq ovoz)
+            const vol = Math.max(0.0, Math.min(1.0, (4.5 - dist) / 3));
+            item.video.volume = vol;
+          } else {
+            // Uzoqlashganda: video sekin ovozsiz qilinadi va to'xtaydi
+            item.video.volume = 0;
+            if (!item.video.paused) item.video.pause();
+          }
+        });
+
+        renderer.render(scene, camera);
+      }
+      animate();
+    }
+  </script>
+</body>
+</html>
