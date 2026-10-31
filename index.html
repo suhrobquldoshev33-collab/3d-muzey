@@ -59,7 +59,6 @@
 </head>
 <body>
 
-  <!-- Asosiy Boshqaruv Menyusi -->
   <div id="dashboard-screen" class="screen-panel">
     <div class="panel-card">
       <h2>🏛 Muzey Boshqaruvi</h2>
@@ -74,7 +73,7 @@
 
   <div id="ui">
     <h1>🏛 5D Shinam Muzey & Marry Me</h1>
-    <p>Joystick bilan silliq harakatlaning | Videoga yaqinlashing</p>
+    <p>Joystick bilan silliq harakatlaning | Eksponatlarni tomosha qiling</p>
   </div>
 
   <input type="file" id="media-input" accept="image/*,video/*" multiple>
@@ -96,7 +95,6 @@
     let is3dInitialized = false;
     let playerGroup;
 
-    // Tugma hodisalarini ulash
     document.getElementById("b-enter").addEventListener("click", enterMuseum);
     document.getElementById("b-edit").addEventListener("click", openGallery);
     document.getElementById("b-gallery").addEventListener("click", openGallery);
@@ -172,7 +170,6 @@
         const fileURL = URL.createObjectURL(file);
         const slot = gallerySlots[currentSlotIndex];
 
-        // Oldingi videoni to'xtatish
         if (slot.video) {
           slot.video.pause();
           slot.video = null;
@@ -226,10 +223,11 @@
 
     function init3D() {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x181024);
+      scene.background = new THREE.Color(0x1a1128);
 
-      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-      camera.position.set(0, 5, 10);
+      // Kamerani haqiqiy 3D burchak ostida to'g'rilaymiz
+      camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 3.5, 7.5);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -243,90 +241,112 @@
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.08;
-        controls.maxPolarAngle = Math.PI / 2 - 0.02;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05;
         controls.minDistance = 2.0;
-        controls.maxDistance = 15.0;
+        controls.maxDistance = 14.0;
       }
 
-      scene.add(new THREE.AmbientLight(0xffffff, 0.95));
-      const dirLight = new THREE.DirectionalLight(0xffecd6, 0.6);
-      dirLight.position.set(10, 15, 10);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+      const dirLight = new THREE.DirectionalLight(0xfffaed, 0.7);
+      dirLight.position.set(5, 12, 5);
       scene.add(dirLight);
 
-      const wallMat = new THREE.MeshBasicMaterial({ color: 0xfffcf7 });
-      const floorMat = new THREE.MeshBasicMaterial({ color: 0xe6d4c1 });
-      const ceilingMat = new THREE.MeshBasicMaterial({ color: 0x221733 });
+      // Chiroyli rangli devorlar va pastroq shift (Balandligi 3.5 metr)
+      const wallMat = new THREE.MeshBasicMaterial({ color: 0x2b213d }); // To'q shohona rang
+      const accentWallMat = new THREE.MeshBasicMaterial({ color: 0x4a2e3b }); // Marry me devori uchun
+      const floorMat = new THREE.MeshBasicMaterial({ color: 0x3d2817 }); // Parket rang
+      const ceilingMat = new THREE.MeshBasicMaterial({ color: 151235 });
 
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), floorMat);
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), floorMat);
       floor.rotation.x = -Math.PI / 2;
       scene.add(floor);
 
-      const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), ceilingMat);
-      ceiling.position.y = 4.5;
+      const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), ceilingMat);
+      ceiling.position.y = 3.5; // Pastroq shift
       ceiling.rotation.x = Math.PI / 2;
       scene.add(ceiling);
 
-      function createWallBlock(w, h, d, x, y, z) {
-        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+      // Shiftga chiroyli qandillar (Chiroq lampochkalari)
+      for(let x = -10; x <= 10; x += 10) {
+        for(let z = -10; z <= 10; z += 10) {
+          const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 0.3, 16), new THREE.MeshBasicMaterial({color: 0xd4af37}));
+          lampBase.position.set(x, 3.35, z);
+          scene.add(lampBase);
+          const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), new THREE.MeshBasicMaterial({color: 0xffffff}));
+          bulb.position.set(x, 3.15, z);
+          scene.add(bulb);
+        }
+      }
+
+      // Devorlar
+      function createWall(w, h, d, x, y, z, mat = wallMat) {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
         wall.position.set(x, y, z);
         scene.add(wall);
       }
 
-      function createWallWithDoor(totalWidth, wallX, wallZ, doorX, isRotated = false) {
-        const wallHeight = 4.5, doorWidth = 3.2, doorHeight = 3.2;
-        const sideWidth = (totalWidth - doorWidth) / 2;
-        if (!isRotated) {
-          createWallBlock(sideWidth, wallHeight, 0.6, wallX - (doorWidth/2 + sideWidth/2), wallHeight/2, wallZ);
-          createWallBlock(sideWidth, wallHeight, 0.6, wallX + (doorWidth/2 + sideWidth/2), wallHeight/2, wallZ);
-          createWallBlock(doorWidth, wallHeight - doorHeight, 0.6, wallX, wallHeight - (wallHeight - doorHeight)/2, wallZ);
-        } else {
-          createWallBlock(0.6, wallHeight, sideWidth, wallX, wallHeight/2, wallZ - (doorWidth/2 + sideWidth/2));
-          createWallBlock(0.6, wallHeight, sideWidth, wallX, wallHeight/2, wallZ + (doorWidth/2 + sideWidth/2));
-          createWallBlock(0.6, wallHeight - doorHeight, doorWidth, wallX, wallHeight - (wallHeight - doorHeight)/2, wallZ);
-        }
+      createWall(40, 3.5, 0.5, 0, 1.75, -20);
+      createWall(40, 3.5, 0.5, 0, 1.75, 20, accentWallMat);
+      createWall(0.5, 3.5, 40, -20, 1.75, 0);
+      createWall(0.5, 3.5, 40, 20, 1.75, 0);
+
+      // Haykallar va vazalar (Eksponatlar)
+      function createStatue(x, z) {
+        const statueGroup = new THREE.Group();
+        // Postament (taglik)
+        const pedestal = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.8), new THREE.MeshBasicMaterial({color: 0x554433}));
+        pedestal.position.y = 0.6;
+        statueGroup.add(pedestal);
+        // Haykal tanasi / Vaza
+        const sculpture = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.2, 16), new THREE.MeshBasicMaterial({color: 0xd4af37}));
+        sculpture.position.y = 1.8;
+        statueGroup.add(sculpture);
+        statueGroup.position.set(x, 0, z);
+        scene.add(statueGroup);
       }
+      createStatue(-12, -12);
+      createStatue(12, -12);
+      createStatue(-12, 12);
+      createStatue(12, 12);
 
-      createWallBlock(60, 4.5, 0.6, 0, 2.25, -30);
-      createWallBlock(60, 4.5, 0.6, 0, 2.25, 30);
-      createWallBlock(0.6, 4.5, 60, -30, 2.25, 0);
-      createWallBlock(0.6, 4.5, 60, 30, 2.25, 0);
-
-      createWallWithDoor(30, -15, -10, -15);
-      createWallWithDoor(30, 15, 10, 15);
-      createWallWithDoor(20, 10, 20, 20, true);
-
-      // Qizil gilam va Marry Me zonasi
-      const carpet = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 18), new THREE.MeshBasicMaterial({ color: 0xc62828 }));
+      // Qizil gilam va Marry Me zonasi (O'z joyida - oldinga qaratilgan)
+      const carpet = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 14), new THREE.MeshBasicMaterial({ color: 0x990000 }));
       carpet.rotation.x = -Math.PI / 2;
-      carpet.position.set(20, 0.02, 19);
+      carpet.position.set(0, 0.01, 12);
       scene.add(carpet);
 
+      // Marry Me yozuvi va maxsus zona
       const marryGroup = new THREE.Group();
-      marryGroup.position.set(20, 0, 26);
-      marryGroup.add(createTextSprite("S + Z", 110, "#ff2a6d")).position.set(0, 3.2, -2);
-      marryGroup.add(createTextSprite("WILL YOU MARRY ME? 💍", 55, "#d4af37")).position.set(0, 2.4, -2);
+      marryGroup.position.set(0, 0, 19.2);
+      marryGroup.add(createTextSprite("S + Z", 120, "#ff2a6d")).position.set(0, 2.5, 0);
+      marryGroup.add(createTextSprite("WILL YOU MARRY ME? 💍", 60, "#d4af37")).position.set(0, 1.7, 0);
       scene.add(marryGroup);
 
-      // Personaj
+      // Personaj (Pingvin / Doira - endi yetarlicha kattalashtirilgan va aniq ko'rinadi)
       playerGroup = new THREE.Group();
-      const pBody = new THREE.Mesh(new THREE.SphereGeometry(0.48, 32, 32), new THREE.MeshBasicMaterial({ color: 0x4a535e }));
-      pBody.position.y = 0.55;
+      const pBody = new THREE.Mesh(new THREE.SphereGeometry(0.7, 32, 32), new THREE.MeshBasicMaterial({ color: 0x3498db }));
+      pBody.position.y = 0.7;
       playerGroup.add(pBody);
+      // Bosh qismi
+      const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.4, 32, 32), new THREE.MeshBasicMaterial({ color: 0xecf0f1 }));
+      pHead.position.y = 1.4;
+      playerGroup.add(pHead);
       scene.add(playerGroup);
 
       // Ramkalar
       const slotPositions = [
-        { pos: [20, 2.3, 29.4], size: [3.8, 2.4], rotY: Math.PI },
-        { pos: [0, 2.3, -29.6], size: [3.8, 2.4] },
-        { pos: [-8, 2.3, -29.6], size: [2.5, 3.2] },
-        { pos: [8, 2.3, -29.6], size: [2.5, 3.2] }
+        { pos: [0, 2.0, -19.7], size: [4.0, 2.5] },
+        { pos: [-10, 2.0, -19.7], size: [3.0, 3.0] },
+        { pos: [10, 2.0, -19.7], size: [3.0, 3.0] },
+        { pos: [-19.7, 2.0, 0], size: [3.5, 2.5], rotY: Math.PI / 2 },
+        { pos: [19.7, 2.0, 0], size: [3.5, 2.5], rotY: -Math.PI / 2 }
       ];
 
       slotPositions.forEach(slot => {
         const itemGroup = new THREE.Group();
         const mediaMesh = new THREE.Mesh(new THREE.PlaneGeometry(slot.size[0], slot.size[1]), new THREE.MeshBasicMaterial({ color: 0xd1c7bd }));
         mediaMesh.position.set(0, 0, 0.05);
-        mediaMesh.rotation.y = slot.rotY || 0;
+        if(slot.rotY) mediaMesh.rotation.y = slot.rotY;
         itemGroup.add(mediaMesh);
         itemGroup.position.set(slot.pos[0], slot.pos[1], slot.pos[2]);
         scene.add(itemGroup);
@@ -354,7 +374,7 @@
       function animate() {
         requestAnimationFrame(animate);
         if (Math.abs(moveData.x) > 0.08 || Math.abs(moveData.y) > 0.08) {
-          const speed = 0.07;
+          const speed = 0.08;
           const camAngle = Math.atan2(camera.position.x - playerGroup.position.x, camera.position.z - playerGroup.position.z);
           const moveAngle = Math.atan2(moveData.x, moveData.y) + camAngle;
           playerGroup.position.x += Math.sin(moveAngle) * speed;
@@ -362,14 +382,13 @@
           playerGroup.rotation.y = moveAngle;
         }
 
-        // Video yaqiniga borganda ovozni boshqarish
         let nearVideo = false;
         gallerySlots.forEach(slot => {
           if (slot.video) {
             const dist = playerGroup.position.distanceTo(slot.worldPos);
-            if (dist < 4.0) { // 4 metr yaqinlashsa
+            if (dist < 4.5) {
               nearVideo = true;
-              slot.video.volume = 1.0; // Video ovozi chiqadi
+              slot.video.volume = 1.0;
             } else {
               slot.video.volume = 0.0;
             }
@@ -377,15 +396,11 @@
         });
 
         if (bgMusic) {
-          if (nearVideo) {
-            bgMusic.volume = 0.05; // Fon musiqasi pasayadi
-          } else {
-            bgMusic.volume = 0.4;  // Normal holatga qaytadi
-          }
+          bgMusic.volume = nearVideo ? 0.05 : 0.4;
         }
 
         if (controls) {
-          controls.target.set(playerGroup.position.x, playerGroup.position.y + 0.5, playerGroup.position.z);
+          controls.target.set(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
           controls.update();
         }
         renderer.render(scene, camera);
