@@ -2,47 +2,73 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Mening 3D Muzeyim</title>
-    <!-- A-Frame kutubxonasi -->
+    <title>Mening 3D Virtual Muzeyim</title>
+    <!-- A-Frame va harakatlanish uchun qo'shimcha kutubxonalar -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+    <style>
+      /* Videoni va audio boshqaruvini qulay qilish uchun uslub */
+      #media-container {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px 15px;
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      video {
+        width: 160px;
+        height: 90px;
+        border-radius: 6px;
+      }
+    </style>
   </head>
   <body>
-    
-    <!-- Video va boshqa elementlar uchun HTML qismi -->
-    <div style="position: absolute; top: 10px; left: 10px; z-index: 999; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px;">
-      <video id="muzeyVideo" width="320" height="180" controls loop playsinline>
-        <source src="VIDEO_HAVOLANGIZ.mp4" type="video/mp4">
-        Sizning brauzeringiz videoni qo'llab-quvvatlamaydi.
+
+    <!-- Foydalanuvchi o'z videolari va musiqasini boshqarishi uchun panel -->
+    <div id="media-container">
+      <video id="muhitVideo" controls playsinline>
+        <source src="SIZNING_VIDEONGIZ.mp4" type="video/mp4">
       </video>
+      <audio id="muhitAudio" loop>
+        <source src="SIZNING_MUSIQANGIZ.mp3" type="audio/mpeg">
+      </audio>
+      <button onclick="document.getElementById('muhitAudio').play(); alert('Musiqa yoqildi!')" style="background: #ff4757; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">🎵 Musiqani yoqish</button>
     </div>
 
     <a-scene>
-      <!-- Atrof muhit -->
-      <a-sky color="#1a1a1a"></a-sky>
+      
+      <!-- 1. Atrof muhit foni -->
+      <a-sky color="#222222"></a-sky>
 
-      <!-- Zamin -->
-      <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#333333"></a-plane>
+      <!-- 2. Muzey Polikasi (Zamin) -->
+      <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#e0e0e0"></a-plane>
 
-      <!-- Devorlar -->
-      <a-box position="0 2.5 -10" width="20" height="5" depth="0.5" color="#444444"></a-box>
-      <a-box position="0 2.5 10" width="20" height="5" depth="0.5" color="#444444"></a-box>
-      <a-box position="-10 2.5 0" width="0.5" height="5" depth="20" color="#444444"></a-box>
-      <a-box position="10 2.5 0" width="0.5" height="5" depth="20" color="#444444"></a-box>
+      <!-- 3. Muzey Zallari (Devorlar) -->
+      <a-box position="0 3 -15" width="30" height="6" depth="0.5" color="#f5f5f5"></a-box>
+      <a-box position="0 3 15" width="30" height="6" depth="0.5" color="#f5f5f5"></a-box>
+      <a-box position="-15 3 0" width="0.5" height="6" depth="30" color="#f5f5f5"></a-box>
+      <a-box position="15 3 0" width="0.5" height="6" depth="30" color="#f5f5f5"></a-box>
 
-      <!-- Rasm -->
-      <a-image src="RASM_HAVolangiz.jpg" position="-4 2.5 -9.7" width="4" height="3"></a-image>
+      <!-- 4. Devordagi rasmlar galereyasi -->
+      <a-image src="RASM_1_URL.jpg" position="-5 3 -14.7" width="5" height="4"></a-image>
+      <a-image src="RASM_2_URL.jpg" position="5 3 -14.7" width="5" height="4"></a-image>
 
-      <!-- Ayiqcha 3D modeli -->
-      <a-entity gltf-model="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoxAnimated/glTF/BoxAnimated.gltf" 
-                position="0 0 -3" 
-                scale="1 1 1"
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 5000">
+      <!-- 5. Muzey ichida harakatlanuvchi Pinguin 3D modeli -->
+      <a-entity gltf-model="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf" 
+                position="0 0 -5" 
+                scale="3 3 3"
+                animation="property: position; to: 0 0 -8; dir: alternate; loop: true; dur: 3000">
       </a-entity>
 
-      <!-- Kamera -->
-      <a-camera position="0 1.6 5">
-        <a-cursor color="#FF0000"></a-cursor>
+      <!-- 6. Foydalanuvchi kamerasi va yurish boshqaruvi -->
+      <a-camera position="0 1.6 8" kinematic-body>
+        <a-cursor color="#00FF00"></a-cursor>
       </a-camera>
 
     </a-scene>
