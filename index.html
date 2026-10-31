@@ -88,7 +88,7 @@
 
   <div id="ui">
     <h1>🏛 5D Shinam Muzey & Marry Me</h1>
-    <p>Alohida xonalar va kapalaklar</p>
+    <p>Devorga ilingan eksponatlar va maxsus rejim</p>
   </div>
 
   <input type="file" id="media-input" accept="image/*,video/*">
@@ -111,6 +111,7 @@
     let currentSlotIndex = 0;
     let is3dInitialized = false;
     let playerGroup;
+    let roomGroup;
     let uploadTargetType = 'museum';
 
     document.getElementById("b-enter").addEventListener("click", enterMuseum);
@@ -300,6 +301,9 @@
       dirLight.position.set(5, 12, 5);
       scene.add(dirLight);
 
+      roomGroup = new THREE.Group();
+      scene.add(roomGroup);
+
       const wallMat = new THREE.MeshBasicMaterial({ color: 0x31244a });
       const marryRoomWallMat = new THREE.MeshBasicMaterial({ color: 0x4a2838 });
       const floorMat = new THREE.MeshBasicMaterial({ color: 0x422d1a });
@@ -308,27 +312,27 @@
       const floor1 = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), floorMat);
       floor1.rotation.x = -Math.PI / 2;
       floor1.position.set(0, 0, 0);
-      scene.add(floor1);
+      roomGroup.add(floor1);
 
       const floor2 = new THREE.Mesh(new THREE.PlaneGeometry(40, 20), floorMat);
       floor2.rotation.x = -Math.PI / 2;
       floor2.position.set(0, 0, 30);
-      scene.add(floor2);
+      roomGroup.add(floor2);
 
       const ceiling1 = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), ceilingMat);
       ceiling1.position.set(0, 3.5, 0);
       ceiling1.rotation.x = Math.PI / 2;
-      scene.add(ceiling1);
+      roomGroup.add(ceiling1);
 
       const ceiling2 = new THREE.Mesh(new THREE.PlaneGeometry(40, 20), ceilingMat);
       ceiling2.position.set(0, 3.5, 30);
       ceiling2.rotation.x = Math.PI / 2;
-      scene.add(ceiling2);
+      roomGroup.add(ceiling2);
 
       function createWall(w, h, d, x, y, z, mat = wallMat) {
         const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
         wall.position.set(x, y, z);
-        scene.add(wall);
+        roomGroup.add(wall);
       }
 
       createWall(40, 3.5, 0.5, 0, 1.75, -20);
@@ -342,6 +346,7 @@
       createWall(0.5, 3.5, 20, -20, 1.75, 30, marryRoomWallMat);
       createWall(0.5, 3.5, 20, 20, 1.75, 30, marryRoomWallMat);
 
+      // Eshik arkasi
       function createDoorway(x, z, rotY = 0) {
         const doorGroup = new THREE.Group();
         const frameMat = new THREE.MeshBasicMaterial({ color: 0xd4af37 });
@@ -360,26 +365,21 @@
 
         doorGroup.position.set(x, 0, z);
         doorGroup.rotation.y = rotY;
-        scene.add(doorGroup);
+        roomGroup.add(doorGroup);
       }
       createDoorway(0, 20);
 
-      const marryCarpet = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 16), new THREE.MeshBasicMaterial({ color: 0x990000 }));
-      marryCarpet.rotation.x = -Math.PI / 2;
-      marryCarpet.position.set(0, 0.02, 30);
-      scene.add(marryCarpet);
-
-      // Marry Me xonasidagi yozuv va faqat bitta ramka
+      // **Marry Me xonasi: Z+S yozuvi va rasm/video to'g'ridan-to'g'ri devorga o'rnatilgan**
       const marryGroup = new THREE.Group();
-      marryGroup.position.set(0, 0, 39.7);
-      marryGroup.add(createTextSprite("S + Z", 120, "#ff2a6d")).position.set(0, 2.7, 0);
-      marryGroup.add(createTextSprite("WILL YOU MARRY ME? 💍", 55, "#d4af37")).position.set(0, 2.0, 0);
+      marryGroup.position.set(0, 1.9, 39.7); // Devorga yopishtirildi
+      marryGroup.add(createTextSprite("S + Z", 120, "#ff2a6d")).position.set(0, 0.8, 0);
+      marryGroup.add(createTextSprite("WILL YOU MARRY ME? 💍", 55, "#d4af37")).position.set(0, 0.1, 0);
       
-      const marryMediaMesh = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 2.8), new THREE.MeshBasicMaterial({ color: 0xd1c7bd }));
-      marryMediaMesh.position.set(0, 0.5, 0);
+      const marryMediaMesh = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 2.6), new THREE.MeshBasicMaterial({ color: 0xd1c7bd }));
+      marryMediaMesh.position.set(0, -0.9, 0);
       marryGroup.add(marryMediaMesh);
-      scene.add(marryGroup);
-      marryMeSlot = { mesh: marryMediaMesh, group: marryGroup, video: null, worldPos: new THREE.Vector3(0, 2.0, 39.0) };
+      scene.add(marryGroup); // scene ga qo'shildi, toki krupniy rejimda yo'qolib qolmasin
+      marryMeSlot = { mesh: marryMediaMesh, group: marryGroup, video: null, worldPos: new THREE.Vector3(0, 1.9, 39.0) };
 
       // Kapalaklar faqat Marry Me xonasida uchib yuradi
       for (let i = 0; i < 10; i++) {
@@ -429,7 +429,7 @@
 
       scene.add(playerGroup);
 
-      // Ikkinchi xona (Asosiy eksponatlar zali) ramkalari
+      // **Ikkinchi xona (Asosiy eksponatlar zalidagi devorga ilingan ramkalar)**
       const slotPositions = [
         { pos: [-10, 2.0, -19.7], size: [3.0, 3.0] },
         { pos: [10, 2.0, -19.7], size: [3.0, 3.0] },
@@ -444,7 +444,7 @@
         if(slot.rotY) mediaMesh.rotation.y = slot.rotY;
         itemGroup.add(mediaMesh);
         itemGroup.position.set(slot.pos[0], slot.pos[1], slot.pos[2]);
-        scene.add(itemGroup);
+        scene.add(itemGroup); // scene ga qo'shildi
         gallerySlots.push({ mesh: mediaMesh, group: itemGroup, video: null, worldPos: new THREE.Vector3(slot.pos[0], slot.pos[1], slot.pos[2]) });
       });
 
@@ -460,93 +460,4 @@
         const rect = zone.getBoundingClientRect();
         let dx = touch.clientX - (rect.left + 55), dy = touch.clientY - (rect.top + 55);
         const dist = Math.sqrt(dx*dx + dy*dy), maxR = 38;
-        if (dist > maxR) { dx = (dx/dist)*maxR; dy = (dy/dist)*maxR; }
-        knob.style.left = `${32 + dx}px`; knob.style.top = `${32 + dy}px`;
-        moveData.x = dx / maxR; moveData.y = dy / maxR;
-      }
-
-      function animate(time) {
-        requestAnimationFrame(animate);
-        
-        butterflies.forEach((b, index) => {
-          b.mesh.position.y += Math.sin(time * 0.003 + b.offset) * 0.01;
-          b.mesh.position.x += Math.cos(time * 0.002 + index) * 0.02;
-          b.mesh.rotation.y += 0.02;
-        });
-
-        if (Math.abs(moveData.x) > 0.08 || Math.abs(moveData.y) > 0.08) {
-          const speed = 0.08;
-          const camAngle = Math.atan2(camera.position.x - playerGroup.position.x, camera.position.z - playerGroup.position.z);
-          const moveAngle = Math.atan2(moveData.x, moveData.y) + camAngle;
-          
-          let newX = playerGroup.position.x + Math.sin(moveAngle) * speed;
-          let newZ = playerGroup.position.z + Math.cos(moveAngle) * speed;
-
-          const m = 1.2;
-          let canMove = false;
-
-          if (newZ >= -20 + m && newZ <= 20 - m) {
-            if (newX >= -20 + m && newX <= 20 - m) {
-              canMove = true;
-            }
-          } else if (newZ >= 20 + m && newZ <= 40 - m) {
-            if (newX >= -20 + m && newX <= 20 - m) {
-              canMove = true;
-            }
-          } else if (newZ > 19 && newZ < 21) {
-            if (newX >= -1.8 && newX <= 1.8) {
-              canMove = true;
-            }
-          }
-
-          if (canMove) {
-            playerGroup.position.x = newX;
-            playerGroup.position.z = newZ;
-          }
-
-          playerGroup.rotation.y = moveAngle;
-        }
-
-        let nearestSlot = null;
-        let minDistance = 999;
-        let allSlots = [...gallerySlots, marryMeSlot];
-
-        allSlots.forEach(slot => {
-          const dist = playerGroup.position.distanceTo(slot.worldPos);
-          if (dist < minDistance) {
-            minDistance = dist;
-            nearestSlot = slot;
-          }
-        });
-
-        let nearMedia = false;
-        if (nearestSlot && minDistance < 3.8) {
-          nearMedia = true;
-          if (nearestSlot.video) {
-            nearestSlot.video.volume = 1.0;
-          }
-          const targetCamX = nearestSlot.worldPos.x + (nearestSlot.worldPos.z === -19.7 ? 0 : (nearestSlot.worldPos.x < 0 ? 2.5 : -2.5));
-          const targetCamZ = nearestSlot.worldPos.z + (nearestSlot.worldPos.z === -19.7 ? 2.5 : (nearestSlot.worldPos.z === 39.0 ? -3.5 : 0));
-          
-          camera.position.x += (targetCamX - camera.position.x) * 0.05;
-          camera.position.z += (targetCamZ - camera.position.z) * 0.05;
-          camera.position.y += (2.2 - camera.position.y) * 0.05;
-        } else {
-          allSlots.forEach(s => { if(s.video) s.video.volume = 0.0; });
-        }
-
-        if (bgMusic) {
-          bgMusic.volume = nearMedia ? 0.04 : 0.4;
-        }
-
-        if (controls) {
-          controls.target.set(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
-          controls.update();
-        }
-        renderer.render(scene, camera);
-      }
-      animate();
-    }
-  </script>
-</body>
-</html>
+        if (dist > maxR) { dx = (dx/dist)*maxR; dy =
