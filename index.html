@@ -3,20 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>3D Muzey Boshqaruv Paneli</title>
+  <title>5D Shinam Muzey & Marry Me</title>
   <style>
-    body { margin: 0; overflow: hidden; background: #0d0814; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; color: white; }
+    body { margin: 0; overflow: hidden; background: #05030a; font-family: 'Segoe UI', sans-serif; touch-action: none; color: white; }
     #canvas-container { width: 100vw; height: 100vh; display: none; }
     
-    /* Yuqori UI */
     #ui {
       position: absolute; top: 15px; width: 100%; text-align: center;
-      color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.9); pointer-events: none; z-index: 10; display: none;
+      color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; z-index: 10; display: none;
     }
-    h1 { font-size: 18px; margin: 0; color: #ffdfa9; }
+    h1 { font-size: 18px; margin: 0; color: #ffdfa9; letter-spacing: 1px; }
     p { font-size: 11px; opacity: 0.9; margin-top: 4px; }
 
-    /* Parol va Boshqaruv Menyusi Ekrani */
     .screen-panel {
       position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
       background: #0d0814; display: flex; flex-direction: column;
@@ -41,7 +39,6 @@
     }
     #error-msg { color: #ff4d4d; font-size: 12px; font-weight: bold; display: none; margin-top: 5px; }
 
-    /* Virtual Joystick */
     #joystick-zone {
       position: absolute; bottom: 35px; left: 25px; width: 110px; height: 110px;
       background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.3);
@@ -54,8 +51,8 @@
 
     #back-to-menu-btn {
       position: absolute; top: 15px; left: 15px; z-index: 99; display: none;
-      background: rgba(0,0,0,0.6); color: #ffdfa9; border: 1px solid #ffdfa9;
-      padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;
+      background: rgba(0,0,0,0.7); color: #ffdfa9; border: 1px solid #ffdfa9;
+      padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;
     }
 
     #media-input { display: none; }
@@ -76,7 +73,7 @@
     </div>
   </div>
 
-  <!-- Asosiy Boshqaruv Menyusi -->
+  <!-- Boshqaruv Menyusi -->
   <div id="dashboard-screen" class="screen-panel" style="display: none;">
     <div class="panel-card">
       <h2>🏛 Muzey Boshqaruvi</h2>
@@ -87,19 +84,19 @@
     </div>
   </div>
 
-  <!-- Bosh menyuga qaytish tugmasi -->
   <button id="back-to-menu-btn" onclick="showDashboard()">↩ Menyu</button>
 
   <div id="ui">
-    <h1>🏛 4K Shinam Muzey & Marry Me</h1>
-    <p>Joystick orqali harakatlaning va eshiklardan o'ting</p>
+    <h1>🏛 5D Shinam Muzey & Marry Me</h1>
+    <p>Joystick bilan silliq harakatlaning | Eshiklar orqali xonalarga o'ting</p>
   </div>
 
   <input type="file" id="media-input" accept="image/*,video/*" multiple onchange="handleFileSelect(event)">
   <div id="joystick-zone"><div id="joystick-knob"></div></div>
   <div id="canvas-container"></div>
 
-  <audio id="bg-music" loop src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=relaxing-piano-112221.mp3"></audio>
+  <!-- UO'TA SOKIN VA YOQIMLI PIANINO MUSIQASI -->
+  <audio id="bg-music" loop src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c823023e.mp3?filename=soft-piano-10781.mp3"></audio>
 
   <script>
     if (window.Telegram && window.Telegram.WebApp) {
@@ -141,6 +138,7 @@
       document.getElementById("joystick-zone").style.display = "block";
       document.getElementById("back-to-menu-btn").style.display = "block";
       
+      bgMusic.volume = 0.4;
       bgMusic.play().catch(e => console.log(e));
 
       if (!is3dInitialized) {
@@ -150,13 +148,13 @@
     }
 
     function createNewMuseum() {
-      if (confirm("Yangi muzey yaratmoqchimisiz? Eski yuklangan fayllar tozalanadi.")) {
+      if (confirm("Yangi muzey yaratasizmi? Eski yuklangan fayllar tozalanadi.")) {
         gallerySlots.forEach(slot => {
           slot.mesh.material = new THREE.MeshBasicMaterial({ color: 0xd1c7bd });
           if(slot.video) { slot.video.pause(); slot.video = null; }
         });
         currentSlotIndex = 0;
-        alert("Yangi muzey tayyor! Endi 'Muzeyni tahrirlash' tugmasi orqali yangi rasm/videolarni yuklang.");
+        alert("Yangi muzey tayyor! 'Muzeyni tahrirlash' orqali fayllaringizni yuklang.");
       }
     }
 
@@ -164,7 +162,7 @@
       const currentUrl = window.location.href;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(currentUrl).then(() => {
-          alert("Muzey havolasi nusxalandi! Endi uni do'stlaringizga yuborishingiz mumkin:\n" + currentUrl);
+          alert("Muzey havolasi nusxalandi:\n" + currentUrl);
         });
       } else {
         alert("Muzey havolasi:\n" + currentUrl);
@@ -203,17 +201,16 @@
 
           const tex = new THREE.VideoTexture(vid);
           tex.minFilter = THREE.LinearFilter;
-          tex.magFilter = THREE.LinearFilter;
           slot.mesh.material = new THREE.MeshBasicMaterial({ map: tex });
           slot.video = vid;
         }
 
         currentSlotIndex++;
       }
-      alert("Fayllar muzeyga joylandi! 'Muzeyga kirish' tugmasi orqali tomosha qiling.");
+      alert("Fayllar muzeyga muvaffaqiyatli joylandi!");
     }
 
-    function createTextSprite(text, fontSize = 70, color = "#ff4081") {
+    function createTextSprite(text, fontSize = 75, color = "#ff4081") {
       const canvas = document.createElement('canvas');
       canvas.width = 1024; canvas.height = 512;
       const ctx = canvas.getContext('2d');
@@ -233,10 +230,10 @@
 
     function init3D() {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x120c1a);
+      scene.background = new THREE.Color(0x181024);
 
       camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-      camera.position.set(0, 3, 5);
+      camera.position.set(0, 2.2, 4.5);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -248,21 +245,26 @@
       controls.dampingFactor = 0.08;
       controls.maxPolarAngle = Math.PI / 2 - 0.02;
       controls.minDistance = 1.2;
-      controls.maxDistance = 6.0;
+      controls.maxDistance = 5.0;
 
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
       scene.add(ambientLight);
 
-      const wallMat = new THREE.MeshBasicMaterial({ color: 0xfffbf5 });
-      const floorMat = new THREE.MeshBasicMaterial({ color: 0xd9c8b4 });
-      const ceilingMat = new THREE.MeshBasicMaterial({ color: 0x1a1226 });
+      const dirLight = new THREE.DirectionalLight(0xffecd6, 0.6);
+      dirLight.position.set(10, 15, 10);
+      scene.add(dirLight);
+
+      const wallMat = new THREE.MeshBasicMaterial({ color: 0xfffcf7 });
+      const floorMat = new THREE.MeshBasicMaterial({ color: 0xe6d4c1 });
+      const ceilingMat = new THREE.MeshBasicMaterial({ color: 0x221733 });
+      const doorFrameMat = new THREE.MeshBasicMaterial({ color: 0x8b5a2b });
 
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), floorMat);
       floor.rotation.x = -Math.PI / 2;
       scene.add(floor);
 
       const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), ceilingMat);
-      ceiling.position.y = 8;
+      ceiling.position.y = 4.5;
       ceiling.rotation.x = Math.PI / 2;
       scene.add(ceiling);
 
@@ -274,37 +276,67 @@
         wallBoxes.push(new THREE.Box3().setFromObject(wall));
       }
 
-      createWallBlock(60, 8, 0.6, 0, 4, -30);
-      createWallBlock(60, 8, 0.6, 0, 4, 30);
-      createWallBlock(0.6, 8, 60, -30, 4, 0);
-      createWallBlock(0.6, 8, 60, 30, 4, 0);
+      // XONA ESHIKLARINI YARATISH FUNKSIYASI
+      function createWallWithDoor(totalWidth, wallX, wallZ, doorX, isRotated = false) {
+        const wallHeight = 4.5;
+        const doorWidth = 3.2;
+        const doorHeight = 3.2;
+        
+        const sideWidth = (totalWidth - doorWidth) / 2;
 
-      createWallBlock(12, 8, 0.6, -24, 4, -10); 
-      createWallBlock(12, 8, 0.6, -6, 4, -10);
+        if (!isRotated) {
+          // Chap va o'ng devor bo'lagi
+          createWallBlock(sideWidth, wallHeight, 0.6, wallX - (doorWidth/2 + sideWidth/2), wallHeight/2, wallZ);
+          createWallBlock(sideWidth, wallHeight, 0.6, wallX + (doorWidth/2 + sideWidth/2), wallHeight/2, wallZ);
+          // Eshik tepasidagi devor
+          createWallBlock(doorWidth, wallHeight - doorHeight, 0.6, wallX, wallHeight - (wallHeight - doorHeight)/2, wallZ);
 
-      createWallBlock(12, 8, 0.6, 6, 4, 10);
-      createWallBlock(12, 8, 0.6, 24, 4, 10);
-      createWallBlock(0.6, 8, 20, 10, 4, 20);
+          // Eshik Ramkasi
+          const frameLeft = new THREE.Mesh(new THREE.BoxGeometry(0.15, doorHeight, 0.7), doorFrameMat);
+          frameLeft.position.set(wallX - doorWidth/2, doorHeight/2, wallZ);
+          scene.add(frameLeft);
+          const frameRight = new THREE.Mesh(new THREE.BoxGeometry(0.15, doorHeight, 0.7), doorFrameMat);
+          frameRight.position.set(wallX + doorWidth/2, doorHeight/2, wallZ);
+          scene.add(frameRight);
+        } else {
+          createWallBlock(0.6, wallHeight, sideWidth, wallX, wallHeight/2, wallZ - (doorWidth/2 + sideWidth/2));
+          createWallBlock(0.6, wallHeight, sideWidth, wallX, wallHeight/2, wallZ + (doorWidth/2 + sideWidth/2));
+          createWallBlock(0.6, wallHeight - doorHeight, doorWidth, wallX, wallHeight - (wallHeight - doorHeight)/2, wallZ);
+        }
+      }
 
+      // TASHQI DEVORLAR
+      createWallBlock(60, 4.5, 0.6, 0, 2.25, -30);
+      createWallBlock(60, 4.5, 0.6, 0, 2.25, 30);
+      createWallBlock(0.6, 4.5, 60, -30, 2.25, 0);
+      createWallBlock(0.6, 4.5, 60, 30, 2.25, 0);
+
+      // XONALAR VA ESHIKLAR (Chiroyli Eshik Ramkalari Bilan)
+      createWallWithDoor(30, -15, -10, -15);
+      createWallWithDoor(30, 15, 10, 15);
+      createWallWithDoor(20, 10, 20, 20, true);
+
+      // QANDILLAR
       function createChandelier(x, z) {
         const cGroup = new THREE.Group();
-        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.8, 1.2, 16), new THREE.MeshBasicMaterial({ color: 0xd4af37 }));
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.6, 0.8, 16), new THREE.MeshBasicMaterial({ color: 0xd4af37 }));
         cGroup.add(base);
         for(let i=0; i<6; i++) {
-          const crystal = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+          const crystal = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
           const angle = (i/6)*Math.PI*2;
-          crystal.position.set(Math.sin(angle)*0.7, -0.8, Math.cos(angle)*0.7);
+          crystal.position.set(Math.sin(angle)*0.5, -0.5, Math.cos(angle)*0.5);
           cGroup.add(crystal);
         }
-        cGroup.position.set(x, 7.2, z);
+        cGroup.position.set(x, 4.0, z);
         scene.add(cGroup);
       }
       createChandelier(0, -15);
       createChandelier(-18, -20);
       createChandelier(20, 20);
 
+      // QIZIL GILAM VA KAPALAKLAR
       const carpetGeo = new THREE.PlaneGeometry(3.5, 18);
-      const carpetMat = new THREE.MeshBasicMaterial({ color: 0xd32f2f });
+      const carpetMat = new THREE.MeshBasicMaterial({ color: 0xc62828 });
       const carpet = new THREE.Mesh(carpetGeo, carpetMat);
       carpet.rotation.x = -Math.PI / 2;
       carpet.position.set(20, 0.02, 19);
@@ -313,70 +345,112 @@
       const bColors = [0xff4081, 0x00e5ff, 0x76ff03, 0xffea00, 0xe040fb];
       for(let i=0; i<20; i++) {
         const bMat = new THREE.MeshBasicMaterial({ color: bColors[i % bColors.length], side: THREE.DoubleSide });
-        const butterfly = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 0.35), bMat);
-        butterfly.position.set(12 + Math.random()*14, 1 + Math.random()*3.5, 12 + Math.random()*14);
+        const butterfly = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), bMat);
+        butterfly.position.set(12 + Math.random()*14, 1 + Math.random()*2.5, 12 + Math.random()*14);
         scene.add(butterfly);
-        butterflies.push({ mesh: butterfly, speed: 0.02 + Math.random()*0.02, offset: Math.random()*100 });
+        butterflies.push({ mesh: butterfly, speed: 0.02, offset: Math.random()*100 });
       }
 
+      // MARRY ME ZONASI: 5D KELIN VA KUYOV
       const marryGroup = new THREE.Group();
       marryGroup.position.set(20, 0, 26);
 
       const szText = createTextSprite("S + Z", 110, "#ff2a6d");
-      szText.position.set(0, 4.5, -2);
+      szText.position.set(0, 3.2, -2);
       marryGroup.add(szText);
 
-      const marryText = createTextSprite("WILL YOU MARRY ME? 💍", 60, "#d4af37");
-      marryText.position.set(0, 3.3, -2);
+      const marryText = createTextSprite("WILL YOU MARRY ME? 💍", 55, "#d4af37");
+      marryText.position.set(0, 2.4, -2);
       marryGroup.add(marryText);
 
       const groomGroup = new THREE.Group();
-      const gBody = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 0.9), new THREE.MeshBasicMaterial({ color: 0x111111 }));
-      gBody.position.y = 0.45; groomGroup.add(gBody);
-      const gHead = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffdbac }));
-      gHead.position.y = 1.0; groomGroup.add(gHead);
-      groomGroup.position.set(-0.6, 0, 0);
+      const gSuit = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.8), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+      gSuit.position.y = 0.4;
+      groomGroup.add(gSuit);
+      const gHead = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffdbac }));
+      gHead.position.y = 0.9;
+      groomGroup.add(gHead);
+      groomGroup.position.set(-0.55, 0, 0);
       marryGroup.add(groomGroup);
 
       const brideGroup = new THREE.Group();
-      const bDress = new THREE.Mesh(new THREE.ConeGeometry(0.65, 1.2, 16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-      bDress.position.y = 0.6; brideGroup.add(bDress);
-      const bHead = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffdbac }));
-      bHead.position.y = 1.3; brideGroup.add(bHead);
-      brideGroup.position.set(0.6, 0, 0);
+      const bDress = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.1, 16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      bDress.position.y = 0.55;
+      brideGroup.add(bDress);
+      const bHead = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffdbac }));
+      bHead.position.y = 1.25;
+      brideGroup.add(bHead);
+      brideGroup.position.set(0.55, 0, 0);
       marryGroup.add(brideGroup);
 
-      const emojiSprite = createTextSprite("♥️ 🔥 🥰 💖 💞", 70, "#ff1744");
-      emojiSprite.position.set(0.6, 2.3, 0);
+      const emojiSprite = createTextSprite("♥️ 🔥 🥰 💖 💞", 65, "#ff1744");
+      emojiSprite.position.set(0.55, 1.9, 0);
       marryGroup.add(emojiSprite);
 
       scene.add(marryGroup);
 
+      // 5D REALISTIK PINGVIN MODELI
       const playerGroup = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), new THREE.MeshBasicMaterial({ color: 0x5b6570 }));
-      body.scale.set(1, 1.1, 0.95); body.position.y = 0.55; playerGroup.add(body);
-      const belly = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 32), new THREE.MeshBasicMaterial({ color: 0xf5f5f5 }));
-      belly.scale.set(0.85, 0.95, 0.6); belly.position.set(0, 0.52, 0.22); playerGroup.add(belly);
-      const beak = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffcc00 }));
-      beak.scale.set(1.2, 0.7, 1); beak.position.set(0, 0.58, 0.46); playerGroup.add(beak);
+      
+      // Tana (Chiroyli silliq shaklli)
+      const pBodyGeo = new THREE.SphereGeometry(0.48, 32, 32);
+      pBodyGeo.scale(1, 1.15, 0.95);
+      const pBodyMat = new THREE.MeshBasicMaterial({ color: 0x4a535e });
+      const pBody = new THREE.Mesh(pBodyGeo, pBodyMat);
+      pBody.position.y = 0.55;
+      playerGroup.add(pBody);
+
+      // Oq mo'ynali qorin
+      const pBellyGeo = new THREE.SphereGeometry(0.4, 32, 32);
+      pBellyGeo.scale(0.85, 0.98, 0.58);
+      const pBellyMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const pBelly = new THREE.Mesh(pBellyGeo, pBellyMat);
+      pBelly.position.set(0, 0.52, 0.22);
+      playerGroup.add(pBelly);
+
+      // Tumshuq
+      const pBeakGeo = new THREE.SphereGeometry(0.1, 16, 16);
+      pBeakGeo.scale(1.2, 0.7, 1);
+      const pBeak = new THREE.Mesh(pBeakGeo, new THREE.MeshBasicMaterial({ color: 0xffb700 }));
+      pBeak.position.set(0, 0.58, 0.45);
+      playerGroup.add(pBeak);
+
+      // Ko'zlar
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0x050505 });
-      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 16), eyeMat); eyeL.position.set(-0.16, 0.65, 0.42); playerGroup.add(eyeL);
-      const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 16), eyeMat); eyeR.position.set(0.16, 0.65, 0.42); playerGroup.add(eyeR);
+      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 16), eyeMat);
+      eyeL.position.set(-0.15, 0.65, 0.41);
+      playerGroup.add(eyeL);
+      const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 16), eyeMat);
+      eyeR.position.set(0.15, 0.65, 0.41);
+      playerGroup.add(eyeR);
+
+      // Oyoqchalar
+      const footMat = new THREE.MeshBasicMaterial({ color: 0xffb700 });
+      const footL = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 16), footMat);
+      footL.scale.set(1.1, 0.45, 1.3);
+      footL.position.set(-0.18, 0.06, 0.12);
+      playerGroup.add(footL);
+      const footR = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 16), footMat);
+      footR.scale.set(1.1, 0.45, 1.3);
+      footR.position.set(0.18, 0.06, 0.12);
+      playerGroup.add(footR);
+
       playerGroup.position.set(0, 0, 0);
       scene.add(playerGroup);
 
+      // RAMKALAR (GALEREYA SLOTS)
       const frameMat = new THREE.MeshBasicMaterial({ color: 0x8b5a2b });
       const slotPositions = [
-        { pos: [20, 3.5, 29.4], size: [3.8, 2.4], rotY: Math.PI },
-        { pos: [0, 3.5, -29.6], size: [3.8, 2.4] },
-        { pos: [-8, 3.5, -29.6], size: [2.5, 3.2] },
-        { pos: [8, 3.5, -29.6], size: [2.5, 3.2] },
-        { pos: [-20, 3.5, -29.6], size: [2.5, 3.2] },
-        { pos: [20, 3.5, -29.6], size: [2.5, 3.2] },
-        { pos: [-29.6, 3.5, -20], size: [2.5, 3.2], rotY: Math.PI/2 },
-        { pos: [-29.6, 3.5, -12], size: [2.5, 3.2], rotY: Math.PI/2 },
-        { pos: [29.6, 3.5, -20], size: [2.5, 3.2], rotY: -Math.PI/2 },
-        { pos: [29.6, 3.5, -12], size: [2.5, 3.2], rotY: -Math.PI/2 }
+        { pos: [20, 2.3, 29.4], size: [3.8, 2.4], rotY: Math.PI },
+        { pos: [0, 2.3, -29.6], size: [3.8, 2.4] },
+        { pos: [-8, 2.3, -29.6], size: [2.5, 3.2] },
+        { pos: [8, 2.3, -29.6], size: [2.5, 3.2] },
+        { pos: [-20, 2.3, -29.6], size: [2.5, 3.2] },
+        { pos: [20, 2.3, -29.6], size: [2.5, 3.2] },
+        { pos: [-29.6, 2.3, -20], size: [2.5, 3.2], rotY: Math.PI/2 },
+        { pos: [-29.6, 2.3, -12], size: [2.5, 3.2], rotY: Math.PI/2 },
+        { pos: [29.6, 2.3, -20], size: [2.5, 3.2], rotY: -Math.PI/2 },
+        { pos: [29.6, 2.3, -12], size: [2.5, 3.2], rotY: -Math.PI/2 }
       ];
 
       slotPositions.forEach(slot => {
@@ -394,65 +468,4 @@
         itemGroup.add(mediaMesh);
 
         itemGroup.position.set(slot.pos[0], slot.pos[1], slot.pos[2]);
-        scene.add(itemGroup);
-
-        gallerySlots.push({ mesh: mediaMesh, group: itemGroup, video: null });
-      });
-
-      const zone = document.getElementById('joystick-zone');
-      const knob = document.getElementById('joystick-knob');
-      let moveData = { x: 0, y: 0 };
-      let isTouching = false;
-
-      zone.addEventListener('touchstart', (e) => { isTouching = true; updateJoystick(e.touches[0]); e.stopPropagation(); });
-      window.addEventListener('touchmove', (e) => { if(isTouching) { updateJoystick(e.touches[0]); e.stopPropagation(); } });
-      window.addEventListener('touchend', () => {
-        isTouching = false;
-        knob.style.left = '32px'; knob.style.top = '32px';
-        moveData = { x: 0, y: 0 };
-      });
-
-      function updateJoystick(touch) {
-        const rect = zone.getBoundingClientRect();
-        let dx = touch.clientX - (rect.left + rect.width / 2);
-        let dy = touch.clientY - (rect.top + rect.height / 2);
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const maxRadius = 38;
-
-        if (dist > maxRadius) { dx = (dx / dist) * maxRadius; dy = (dy / dist) * maxRadius; }
-        knob.style.left = `${32 + dx}px`; knob.style.top = `${32 + dy}px`;
-        moveData.x = dx / maxRadius; moveData.y = dy / maxRadius;
-      }
-
-      function canMoveTo(newX, newZ) {
-        const playerBox = new THREE.Box3(
-          new THREE.Vector3(newX - 0.5, 0, newZ - 0.5),
-          new THREE.Vector3(newX + 0.5, 1.2, newZ + 0.5)
-        );
-        for (let i = 0; i < wallBoxes.length; i++) {
-          if (playerBox.intersectsBox(wallBoxes[i])) return false;
-        }
-        return true;
-      }
-
-      let walkTimer = 0;
-      function animate() {
-        requestAnimationFrame(animate);
-
-        if (Math.abs(moveData.x) > 0.1 || Math.abs(moveData.y) > 0.1) {
-          const speed = 0.13;
-          const camAngle = Math.atan2(camera.position.x - playerGroup.position.x, camera.position.z - playerGroup.position.z);
-          const moveAngle = Math.atan2(moveData.x, moveData.y) + camAngle;
-
-          const nextX = playerGroup.position.x + Math.sin(moveAngle) * speed;
-          const nextZ = playerGroup.position.z + Math.cos(moveAngle) * speed;
-
-          if (canMoveTo(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
-          if (canMoveTo(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
-
-          playerGroup.rotation.y = moveAngle;
-          walkTimer += 0.18;
-          playerGroup.rotation.z = Math.sin(walkTimer) * 0.1;
-          playerGroup.position.y = Math.abs(Math.sin(walkTimer)) * 0.08;
-        } else {
-          playerGroup.rotation.z = 0; playerGroup.pos
+        scene.add(itemGr
