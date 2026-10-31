@@ -2,74 +2,86 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Mening 3D Virtual Muzeyim</title>
-    <!-- A-Frame va harakatlanish uchun qo'shimcha kutubxonalar -->
+    <title>Mening 3D Ayiqcha Muzeyim</title>
+    <!-- A-Frame va harakatlanish kutubxonalari -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
     <style>
-      /* Videoni va audio boshqaruvini qulay qilish uchun uslub */
-      #media-container {
+      #panel {
         position: fixed;
-        bottom: 20px;
+        bottom: 15px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 9999;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.85);
         padding: 10px 15px;
         border-radius: 12px;
         display: flex;
-        gap: 10px;
+        gap: 12px;
         align-items: center;
       }
       video {
-        width: 160px;
-        height: 90px;
+        width: 140px;
+        height: 80px;
         border-radius: 6px;
+      }
+      button {
+        background: #ff4757;
+        color: white;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
 
-    <!-- Foydalanuvchi o'z videolari va musiqasini boshqarishi uchun panel -->
-    <div id="media-container">
-      <video id="muhitVideo" controls playsinline>
+    <!-- Video va Musiqa paneli -->
+    <div id="panel">
+      <video id="myVideo" controls playsinline>
         <source src="SIZNING_VIDEONGIZ.mp4" type="video/mp4">
       </video>
-      <audio id="muhitAudio" loop>
+      <audio id="myAudio" loop>
         <source src="SIZNING_MUSIQANGIZ.mp3" type="audio/mpeg">
       </audio>
-      <button onclick="document.getElementById('muhitAudio').play(); alert('Musiqa yoqildi!')" style="background: #ff4757; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">🎵 Musiqani yoqish</button>
+      <button onclick="document.getElementById('myAudio').play(); alert('Musiqa yoqildi!')">🎵 Musiqa</button>
     </div>
 
-    <a-scene>
+    <!-- 3D Sahna (AR/VR tugmalari o'chirilgan) -->
+    <a-scene embedded vr-mode-ui="enabled: false">
       
-      <!-- 1. Atrof muhit foni -->
-      <a-sky color="#222222"></a-sky>
+      <!-- Osmon foni -->
+      <a-sky color="#1e1e1e"></a-sky>
 
-      <!-- 2. Muzey Polikasi (Zamin) -->
-      <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#e0e0e0"></a-plane>
+      <!-- Zamin (Pol) -->
+      <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#dcdde1"></a-plane>
 
-      <!-- 3. Muzey Zallari (Devorlar) -->
-      <a-box position="0 3 -15" width="30" height="6" depth="0.5" color="#f5f5f5"></a-box>
-      <a-box position="0 3 15" width="30" height="6" depth="0.5" color="#f5f5f5"></a-box>
-      <a-box position="-15 3 0" width="0.5" height="6" depth="30" color="#f5f5f5"></a-box>
-      <a-box position="15 3 0" width="0.5" height="6" depth="30" color="#f5f5f5"></a-box>
+      <!-- Muzey Devorlari -->
+      <a-box position="0 3 -15" width="30" height="6" depth="0.5" color="#f5f6fa"></a-box>
+      <a-box position="0 3 15" width="30" height="6" depth="0.5" color="#f5f6fa"></a-box>
+      <a-box position="-15 3 0" width="0.5" height="6" depth="30" color="#f5f6fa"></a-box>
+      <a-box position="15 3 0" width="0.5" height="6" depth="30" color="#f5f6fa"></a-box>
 
-      <!-- 4. Devordagi rasmlar galereyasi -->
-      <a-image src="RASM_1_URL.jpg" position="-5 3 -14.7" width="5" height="4"></a-image>
-      <a-image src="RASM_2_URL.jpg" position="5 3 -14.7" width="5" height="4"></a-image>
+      <!-- Devordagi rasmlar -->
+      <a-image src="RASM_1.jpg" position="-5 3 -14.7" width="5" height="4"></a-image>
+      <a-image src="RASM_2.jpg" position="5 3 -14.7" width="5" height="4"></a-image>
 
-      <!-- 5. Muzey ichida harakatlanuvchi Pinguin 3D modeli -->
-      <a-entity gltf-model="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf" 
+      <!-- 3D Ayiqcha modeli (Tayyor ochiq manbali ayiqcha modeli ulandi) -->
+      <a-entity gltf-model="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Bear/glTF/Bear.gltf" 
                 position="0 0 -5" 
-                scale="3 3 3"
-                animation="property: position; to: 0 0 -8; dir: alternate; loop: true; dur: 3000">
+                scale="40 40 40"
+                rotation="0 180 0"
+                animation="property: rotation; to: 0 540 0; loop: true; dur: 8000">
       </a-entity>
 
-      <!-- 6. Foydalanuvchi kamerasi va yurish boshqaruvi -->
-      <a-camera position="0 1.6 8" kinematic-body>
-        <a-cursor color="#00FF00"></a-cursor>
-      </a-camera>
+      <!-- Kamera va erkin yurish boshqaruvi -->
+      <a-entity id="rig" movement-controls="fly: false; speed: 0.1">
+        <a-camera position="0 1.6 8">
+          <a-cursor color="#00FF00"></a-cursor>
+        </a-camera>
+      </a-entity>
 
     </a-scene>
   </body>
