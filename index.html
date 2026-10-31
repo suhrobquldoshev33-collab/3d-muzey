@@ -74,7 +74,7 @@
 
   <div id="ui">
     <h1>🏛 5D Shinam Muzey & Marry Me</h1>
-    <p>Joystick bilan silliq harakatlaning | Eshiklar orqali xonalarga o'ting</p>
+    <p>Joystick bilan silliq harakatlaning | Videoga yaqinlashing</p>
   </div>
 
   <input type="file" id="media-input" accept="image/*,video/*" multiple>
@@ -93,10 +93,10 @@
     let controls, scene, camera, renderer;
     let gallerySlots = [];
     let currentSlotIndex = 0;
-    let butterflies = [];
     let is3dInitialized = false;
+    let playerGroup;
 
-    // Tugma hodisalarini to'g'ridan-to'g'ri ulash
+    // Tugma hodisalarini ulash
     document.getElementById("b-enter").addEventListener("click", enterMuseum);
     document.getElementById("b-edit").addEventListener("click", openGallery);
     document.getElementById("b-gallery").addEventListener("click", openGallery);
@@ -137,12 +137,19 @@
 
     function shareMuseum() {
       const currentUrl = window.location.href;
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(currentUrl).then(() => {
-          alert("Muzey havolasi nusxalandi:\n" + currentUrl);
-        });
+      const shareText = "Mening shinam 3D muzeyimga marhamat! 🏛✨";
+      
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+        const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(shareText)}`;
+        window.Telegram.WebApp.openTelegramLink(telegramShareUrl);
       } else {
-        alert("Muzey havolasi:\n" + currentUrl);
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(currentUrl).then(() => {
+            alert("Muzey havolasi nusxalandi:\n" + currentUrl);
+          });
+        } else {
+          alert("Muzey havolasi:\n" + currentUrl);
+        }
       }
     }
 
@@ -164,6 +171,12 @@
         const file = files[i];
         const fileURL = URL.createObjectURL(file);
         const slot = gallerySlots[currentSlotIndex];
+
+        // Oldingi videoni to'xtatish
+        if (slot.video) {
+          slot.video.pause();
+          slot.video = null;
+        }
 
         if (file.type.startsWith('image/')) {
           const loader = new THREE.TextureLoader();
@@ -216,7 +229,7 @@
       scene.background = new THREE.Color(0x181024);
 
       camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-      camera.position.set(0, 2.2, 4.5);
+      camera.position.set(0, 5, 10);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -231,8 +244,8 @@
         controls.enableDamping = true;
         controls.dampingFactor = 0.08;
         controls.maxPolarAngle = Math.PI / 2 - 0.02;
-        controls.minDistance = 1.2;
-        controls.maxDistance = 5.0;
+        controls.minDistance = 2.0;
+        controls.maxDistance = 15.0;
       }
 
       scene.add(new THREE.AmbientLight(0xffffff, 0.95));
@@ -243,7 +256,6 @@
       const wallMat = new THREE.MeshBasicMaterial({ color: 0xfffcf7 });
       const floorMat = new THREE.MeshBasicMaterial({ color: 0xe6d4c1 });
       const ceilingMat = new THREE.MeshBasicMaterial({ color: 0x221733 });
-      const doorFrameMat = new THREE.MeshBasicMaterial({ color: 0x8b5a2b });
 
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), floorMat);
       floor.rotation.x = -Math.PI / 2;
@@ -254,12 +266,10 @@
       ceiling.rotation.x = Math.PI / 2;
       scene.add(ceiling);
 
-      const wallBoxes = [];
       function createWallBlock(w, h, d, x, y, z) {
         const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
         wall.position.set(x, y, z);
         scene.add(wall);
-        wallBoxes.push(new THREE.Box3().setFromObject(wall));
       }
 
       function createWallWithDoor(totalWidth, wallX, wallZ, doorX, isRotated = false) {
@@ -297,8 +307,8 @@
       marryGroup.add(createTextSprite("WILL YOU MARRY ME? 💍", 55, "#d4af37")).position.set(0, 2.4, -2);
       scene.add(marryGroup);
 
-      // Pingvin model
-      const playerGroup = new THREE.Group();
+      // Personaj
+      playerGroup = new THREE.Group();
       const pBody = new THREE.Mesh(new THREE.SphereGeometry(0.48, 32, 32), new THREE.MeshBasicMaterial({ color: 0x4a535e }));
       pBody.position.y = 0.55;
       playerGroup.add(pBody);
@@ -320,7 +330,7 @@
         itemGroup.add(mediaMesh);
         itemGroup.position.set(slot.pos[0], slot.pos[1], slot.pos[2]);
         scene.add(itemGroup);
-        gallerySlots.push({ mesh: mediaMesh, group: itemGroup, video: null });
+        gallerySlots.push({ mesh: mediaMesh, group: itemGroup, video: null, worldPos: new THREE.Vector3(slot.pos[0], slot.pos[1], slot.pos[2]) });
       });
 
       // Joystick
@@ -351,6 +361,29 @@
           playerGroup.position.z += Math.cos(moveAngle) * speed;
           playerGroup.rotation.y = moveAngle;
         }
+
+        // Video yaqiniga borganda ovozni boshqarish
+        let nearVideo = false;
+        gallerySlots.forEach(slot => {
+          if (slot.video) {
+            const dist = playerGroup.position.distanceTo(slot.worldPos);
+            if (dist < 4.0) { // 4 metr yaqinlashsa
+              nearVideo = true;
+              slot.video.volume = 1.0; // Video ovozi chiqadi
+            } else {
+              slot.video.volume = 0.0;
+            }
+          }
+        });
+
+        if (bgMusic) {
+          if (nearVideo) {
+            bgMusic.volume = 0.05; // Fon musiqasi pasayadi
+          } else {
+            bgMusic.volume = 0.4;  // Normal holatga qaytadi
+          }
+        }
+
         if (controls) {
           controls.target.set(playerGroup.position.x, playerGroup.position.y + 0.5, playerGroup.position.z);
           controls.update();
