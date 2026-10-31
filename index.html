@@ -3,26 +3,45 @@
   <head>
     <meta charset="utf-8">
     <title>Mening 3D Muzeyim</title>
-    <!-- A-Frame kutubxonasini ulaymiz -->
+    <!-- A-Frame kutubxonasi -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
   </head>
   <body>
+    
+    <!-- Video va boshqa elementlar uchun HTML qismi -->
+    <div style="position: absolute; top: 10px; left: 10px; z-index: 999; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px;">
+      <video id="muzeyVideo" width="320" height="180" controls loop playsinline>
+        <source src="VIDEO_HAVOLANGIZ.mp4" type="video/mp4">
+        Sizning brauzeringiz videoni qo'llab-quvvatlamaydi.
+      </video>
+    </div>
+
     <a-scene>
-      
-      <!-- 1. Muzey xonasi foni -->
-      <a-sky color="#111111"></a-sky>
+      <!-- Atrof muhit -->
+      <a-sky color="#1a1a1a"></a-sky>
 
-      <!-- 2. Zamin (Pol) -->
-      <a-plane position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#222222"></a-plane>
+      <!-- Zamin -->
+      <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#333333"></a-plane>
 
-      <!-- 3. Rasmlarni osish uchun devor -->
-      <a-box position="0 2 -5" width="6" height="4" depth="0.1" color="#444444"></a-box>
-      
-      <!-- Devordagi rasm -->
-      <a-image src="https://via.placeholder.com/300" position="0 2 -4.9" width="4" height="2.5"></a-image>
+      <!-- Devorlar -->
+      <a-box position="0 2.5 -10" width="20" height="5" depth="0.5" color="#444444"></a-box>
+      <a-box position="0 2.5 10" width="20" height="5" depth="0.5" color="#444444"></a-box>
+      <a-box position="-10 2.5 0" width="0.5" height="5" depth="20" color="#444444"></a-box>
+      <a-box position="10 2.5 0" width="0.5" height="5" depth="20" color="#444444"></a-box>
 
-      <!-- 4. Harakatlanish va kamera -->
-      <a-camera position="0 1.6 3">
+      <!-- Rasm -->
+      <a-image src="RASM_HAVolangiz.jpg" position="-4 2.5 -9.7" width="4" height="3"></a-image>
+
+      <!-- Ayiqcha 3D modeli -->
+      <a-entity gltf-model="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoxAnimated/glTF/BoxAnimated.gltf" 
+                position="0 0 -3" 
+                scale="1 1 1"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 5000">
+      </a-entity>
+
+      <!-- Kamera -->
+      <a-camera position="0 1.6 5">
         <a-cursor color="#FF0000"></a-cursor>
       </a-camera>
 
