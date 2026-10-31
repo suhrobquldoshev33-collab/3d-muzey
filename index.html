@@ -6,14 +6,14 @@
   <title>5D Shinam Muzey & Marry Me</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; overflow: hidden; background: #05030a; font-family: 'Segoe UI', sans-serif; touch-action: none; color: white; }
+    body { margin: 0; padding: 0; overflow: hidden; background: #05030a; font-family: sans-serif; touch-action: none; color: white; }
     #canvas-container { width: 100vw; height: 100vh; display: none; position: absolute; top: 0; left: 0; z-index: 1; }
     
     #ui {
       position: absolute; top: 15px; width: 100%; text-align: center;
       color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; z-index: 10; display: none;
     }
-    h1 { font-size: 18px; margin: 0; color: #ffdfa9; letter-spacing: 1px; }
+    h1 { font-size: 18px; margin: 0; color: #ffdfa9; }
     p { font-size: 11px; opacity: 0.9; margin-top: 4px; }
 
     .screen-panel {
@@ -52,9 +52,10 @@
 
     #media-input { display: none; }
   </style>
-  <!-- Mukammal va Kafolatlangan Three.js hamda OrbitControls kutubxonalari -->
-  <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  
+  <!-- Barqaror va Keng tarqalgan Three.js va OrbitControls CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -63,21 +64,21 @@
   <div id="dashboard-screen" class="screen-panel">
     <div class="panel-card">
       <h2>🏛 Muzey Boshqaruvi</h2>
-      <button class="menu-btn" id="btn-enter">🏛 Muzeyga kirish</button>
-      <button class="menu-btn" id="btn-edit">✏️ Muzeyni tahrirlash</button>
-      <button class="menu-btn" id="btn-share">🔗 Muzeyni ulashish</button>
-      <button class="menu-btn" id="btn-gallery">📁 Galereyadan tanlash</button>
+      <button class="menu-btn" onclick="enterMuseum()">🏛 Muzeyga kirish</button>
+      <button class="menu-btn" onclick="openGallery()">✏️ Muzeyni tahrirlash</button>
+      <button class="menu-btn" onclick="shareMuseum()">🔗 Muzeyni ulashish</button>
+      <button class="menu-btn" onclick="openGallery()">📁 Galereyadan tanlash</button>
     </div>
   </div>
 
-  <button id="back-to-menu-btn">↩ Menyu</button>
+  <button id="back-to-menu-btn" onclick="showDashboard()">↩ Menyu</button>
 
   <div id="ui">
     <h1>🏛 5D Shinam Muzey & Marry Me</h1>
     <p>Joystick bilan silliq harakatlaning | Eshiklar orqali xonalarga o'ting</p>
   </div>
 
-  <input type="file" id="media-input" accept="image/*,video/*" multiple>
+  <input type="file" id="media-input" accept="image/*,video/*" multiple onchange="handleFileSelect(event)">
   <div id="joystick-zone"><div id="joystick-knob"></div></div>
   <div id="canvas-container"></div>
 
@@ -97,21 +98,17 @@
     let butterflies = [];
     let is3dInitialized = false;
 
-    // TUGMA HODISALARI (EVENTS)
-    document.getElementById("btn-enter").onclick = enterMuseum;
-    document.getElementById("btn-edit").onclick = () => document.getElementById('media-input').click();
-    document.getElementById("btn-gallery").onclick = () => document.getElementById('media-input').click();
-    document.getElementById("btn-share").onclick = shareMuseum;
-    document.getElementById("back-to-menu-btn").onclick = showDashboard;
-    document.getElementById("media-input").onchange = handleFileSelect;
-
     function showDashboard() {
       document.getElementById("canvas-container").style.display = "none";
       document.getElementById("ui").style.display = "none";
       document.getElementById("joystick-zone").style.display = "none";
       document.getElementById("back-to-menu-btn").style.display = "none";
       document.getElementById("dashboard-screen").style.display = "flex";
-      if (!bgMusic.paused) bgMusic.pause();
+      if (bgMusic && !bgMusic.paused) bgMusic.pause();
+    }
+
+    function openGallery() {
+      document.getElementById('media-input').click();
     }
 
     function enterMuseum() {
@@ -121,8 +118,10 @@
       document.getElementById("joystick-zone").style.display = "block";
       document.getElementById("back-to-menu-btn").style.display = "block";
       
-      bgMusic.volume = 0.4;
-      bgMusic.play().catch(e => console.log("Ovoz ruxsati berildi"));
+      if(bgMusic) {
+        bgMusic.volume = 0.4;
+        bgMusic.play().catch(e => console.log("Ovoz pleyeri ishga tushdi"));
+      }
 
       if (!is3dInitialized) {
         init3D();
@@ -215,18 +214,20 @@
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       
       const container = document.getElementById('canvas-container');
       container.innerHTML = '';
       container.appendChild(renderer.domElement);
 
-      controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.08;
-      controls.maxPolarAngle = Math.PI / 2 - 0.02;
-      controls.minDistance = 1.2;
-      controls.maxDistance = 5.0;
+      if (typeof THREE.OrbitControls !== 'undefined') {
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.maxPolarAngle = Math.PI / 2 - 0.02;
+        controls.minDistance = 1.2;
+        controls.maxDistance = 5.0;
+      }
 
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
       scene.add(ambientLight);
@@ -281,7 +282,7 @@
         }
       }
 
-      // TASHQI DEVORLAR
+      // DEVORLAR
       createWallBlock(60, 4.5, 0.6, 0, 2.25, -30);
       createWallBlock(60, 4.5, 0.6, 0, 2.25, 30);
       createWallBlock(0.6, 4.5, 60, -30, 2.25, 0);
@@ -327,7 +328,7 @@
         butterflies.push({ mesh: butterfly, speed: 0.02, offset: Math.random()*100 });
       }
 
-      // MARRY ME ZONASI: 5D KELIN VA KUYOV
+      // MARRY ME ZONASI: KELIN VA KUYOV
       const marryGroup = new THREE.Group();
       marryGroup.position.set(20, 0, 26);
 
@@ -365,7 +366,7 @@
 
       scene.add(marryGroup);
 
-      // 5D PINGVIN MODELI
+      // PINGVIN MODELI
       const playerGroup = new THREE.Group();
       const pBodyGeo = new THREE.SphereGeometry(0.48, 32, 32);
       pBodyGeo.scale(1, 1.15, 0.95);
@@ -406,7 +407,7 @@
       playerGroup.position.set(0, 0, 0);
       scene.add(playerGroup);
 
-      // RAMKALAR (GALEREYA SLOTS)
+      // RAMKALAR
       const frameMat = new THREE.MeshBasicMaterial({ color: 0x8b5a2b });
       const slotPositions = [
         { pos: [20, 2.3, 29.4], size: [3.8, 2.4], rotY: Math.PI },
@@ -468,4 +469,9 @@
       }
 
       function canMoveTo(newX, newZ) {
-        const playerB
+        const playerBox = new THREE.Box3(
+          new THREE.Vector3(newX - 0.4, 0, newZ - 0.4),
+          new THREE.Vector3(newX + 0.4, 1.2, newZ + 0.4)
+        );
+        for (let i = 0; i < wallBoxes.length; i++) {
+          if (playerBox.intersectsBox(wallBoxes[i])) ret 
