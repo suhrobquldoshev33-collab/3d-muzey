@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  head>
+    <meta charset="utf-8">
+    <title>Mening 3D Muzeyim</title>
+    <!-- A-Frame kutubxonasini ulaymiz -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  </head>
+  body>
+    <a-scene>
+      
+      <!-- 1. Muzey xonasi (Atrofni o'rab turuvchi sfera yoki quti) -->
+      <a-sky color="#111111"></a-sky>
+
+      <!-- 2. Zamin (Pol) -->
+      <a-plane position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#222222"></a-plane>
+
+      <!-- 3. Rasmlarni osish uchun devor -->
+      <a-box position="0 2 -5" width="6" height="4" depth="0.1" color="#444444"></a-box>
+      
+      <!-- Devordagi rasm (O'zingizning rasm havolangizni qo'yasiz) -->
+      <a-image src="RASM_LINKI_BUYERGA.jpg" position="0 2 -4.9" width="4" height="2.5"></a-image>
+
+      <!-- 4. Harakatlanish va kamera (Foydalanuvchi ko'zi) -->
+      <a-camera position="0 1.6 3">
+        <a-cursor color="#FF0000"></a-cursor>
+      </a-camera>
+
+    </a-scene>
+  </body>
+</html>
