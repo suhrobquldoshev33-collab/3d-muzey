@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>3D Virtual Muzey</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.min.js"></script>
+</head>
+<body>
+  <a-scene environment="preset: gallery">
+    <!-- Resurslar (Media fayllar) -->
+    <a-assets>
+      <img id="wall-texture" src="https://cdn.aframe.io/a-painter/images/floor.jpg">
+      <img id="pic1" src="rasm1.jpg">
+      <video id="vid1" src="video1.mp4" loop="true" crossorigin="anonymous"></video>
+      <!-- 3D Ayiqcha modeli -->
+      <a-asset-item id="bear-model" src="ayiqcha.glb"></a-asset-item>
+    </a-assets>
+
+    <!-- Muzey Xonasi (Pol va Devorlar) -->
+    <a-plane position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#7BC8A4"></a-plane>
+    <a-box position="0 2.5 -10" width="20" height="5" depth="0.5" color="#ECECEC"></a-box>
+
+    <!-- Devordagi Rasm va Video -->
+    <a-image src="#pic1" position="-4 2.5 -9.7" width="3" height="2"></a-image>
+    <a-video src="#vid1" position="4 2.5 -9.7" width="3.5" height="2"></a-video>
+
+    <!-- Ayiqcha Avatari (3-shaxs kamerasi bilan) -->
+    <a-entity id="player" position="0 0 0">
+      <!-- Ayiqcha 3D modeli -->
+      <a-gltf-model src="#bear-model" position="0 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
+      <!-- Kamera ayiqcha ortida -->
+      <a-camera position="0 1.6 3" look-controls></a-camera>
+    </a-entity>
+
+    <!-- Yoritgichlar -->
+    <a-light type="ambient" color="#fff" intensity="0.8"></a-light>
+    <a-light type="directional" position="-1 2 1" intensity="0.5"></a-light>
+  </a-scene>
+</body>
+</html>
